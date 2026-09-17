@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0F172A;
+  color: white;
+}
+
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Card top highlight */
+.card-highlight {
+  border-top: 1px solid rgba(255,255,255,0.07);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03) 0%, transparent 100%);
+}
+
+/* Tap target minimum */
+.tap-target { min-height: 48px; }
+
+/* Skeleton pulse */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+.skeleton { animation: skeleton-pulse 1.5s ease-in-out infinite; background: #1E293B; border-radius: 4px; }

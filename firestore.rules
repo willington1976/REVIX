@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() { return request.auth != null; }
+    function userProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function isSuperAdmin() { return userProfile().role == 'superadmin'; }
+    function isAdmin() { return userProfile().role in ['admin','superadmin']; }
+    function sameAirport(airportCode) { return userProfile().airportCode == airportCode; }
+
+    match /users/{uid} {
+      allow read: if isAuth() && (request.auth.uid == uid || isAdmin());
+      // Admin can only create inspector/admin roles — only superadmin can create superadmin
+      allow create: if isAuth() && isAdmin() &&
+        (isSuperAdmin() || request.resource.data.role != 'superadmin');
+      allow update: if isAuth() && (request.auth.uid == uid || isAdmin());
+      allow delete: if isAuth() && isSuperAdmin();
+    }
+
+    match /airports/{airportCode}/{document=**} {
+      allow read:  if isAuth() && (isSuperAdmin() || sameAirport(airportCode));
+      allow write: if isAuth() && (isSuperAdmin() || sameAirport(airportCode));
+    }
+  }
+}
