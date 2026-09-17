@@ -65,6 +65,7 @@ export default function UserManagement() {
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [form, setForm] = useState({ name:'', email:'', password:'', role:'inspector', airportCode:'', airportName:'' })
   const isSuperAdmin = profile?.role === 'superadmin'
+  const isAdmin = profile?.role === 'admin' || isSuperAdmin
 
   useEffect(() => { loadUsers() }, [])
 
