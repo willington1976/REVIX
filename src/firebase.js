@@ -4,12 +4,12 @@ import { getFirestore } from 'firebase/firestore'
 import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCbvKajLPa2Y6MSIx3Fq3t582ellMS_O-8",
-  authDomain: "revix-bc8c4.firebaseapp.com",
-  projectId: "revix-bc8c4",
-  storageBucket: "revix-bc8c4.firebasestorage.app",
-  messagingSenderId: "954598339265",
-  appId: "1:954598339265:web:5786d48723c41616f81a40"
+  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
 }
 
 const app = initializeApp(firebaseConfig)
