@@ -56,7 +56,7 @@ function Field({ label, children }) {
 }
 
 export default function UserManagement() {
-  const { profile } = useAuth()
+  const { user, profile } = useAuth()
   const navigate = useNavigate()
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -121,6 +121,12 @@ export default function UserManagement() {
 
   const handleToggleActive = async (u) => {
     await updateDoc(doc(db,'users',u.id), { active: !(u.active !== false) })
+    loadUsers()
+  }
+
+  const handleChangeRole = async (userId, newRole) => {
+    if (!newRole) return
+    await updateDoc(doc(db,'users',userId), { role: newRole })
     loadUsers()
   }
 
@@ -298,6 +304,18 @@ export default function UserManagement() {
                         </div>
                         {/* Transfer dropdown — superadmin only */}
                         <div className="flex flex-col gap-1.5 flex-shrink-0">
+                          {isSuperAdmin && u.id !== user?.uid && (
+                            <select
+                              value={u.role}
+                              onChange={e => handleChangeRole(u.id, e.target.value)}
+                              className="text-[10px] font-mono bg-[#0F172A] text-slate-400 border border-white/10 rounded-lg px-2 focus:outline-none"
+                              style={{minHeight:32,
+                                color: u.role==='superadmin'?'#F59E0B': u.role==='admin'?'#2563EB':'#16A34A'}}>
+                              <option value="inspector">Inspector</option>
+                              <option value="admin">Admin</option>
+                              <option value="superadmin">SuperAdmin</option>
+                            </select>
+                          )}
                           {isSuperAdmin && (
                             <select
                               onChange={e => e.target.value && handleTransfer(u.id, e.target.value)}
