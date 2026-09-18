@@ -81,7 +81,7 @@ export default function ExtinguisherForm() {
               Descargar QR (PDF)
             </button>
             <button
-              onClick={() => { setSavedId(null); setForm({serial:'',zone:'',exactLocation:'',type:'',capacity:'',capacityUnit:'kg',expiryDate:'',lastRecharge:''}) }}
+              onClick={() => { setSavedId(null); setForm({serial:'',placa:'',zone:'',exactLocation:'',type:'',capacity:'',capacityUnit:'kg',expiryDate:'',lastRecharge:'',lastHydroTest:'',homolograma:''}) }}
               className="w-full border border-white/10 text-slate-400 hover:text-white font-mono rounded-xl text-xs transition-colors"
               style={{minHeight:48}}>
               + REGISTRAR OTRO
