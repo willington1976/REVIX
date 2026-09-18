@@ -210,8 +210,15 @@ export default function InspectSession() {
         totalOmitidos:omitidos.length, createdAt:serverTimestamp(),
       }
       await addDoc(collection(db,'airports',profile.airportCode,'reports'), data)
-      generateInspectionPDF(data,enriched,profile.airportName||profile.airportCode,omitidos)
-        .save(`Inspeccion_${profile.airportCode}_${sessionDate}.pdf`)
+      const pdfDoc = generateInspectionPDF(data,enriched,profile.airportName||profile.airportCode,omitidos)
+      const fileName = `REVIX_Inspeccion_${profile.airportCode}_${sessionDate}.pdf`
+      const blob = pdfDoc.output('blob')
+      const file = new File([blob], fileName, { type:'application/pdf' })
+      if (navigator.canShare && navigator.canShare({ files:[file] })) {
+        await navigator.share({ files:[file], title:`Inspección REVIX ${profile.airportCode} ${sessionDate}` })
+      } else {
+        pdfDoc.save(fileName)
+      }
       // Delete draft if existed
       try { await deleteDoc(doc(db,'airports',profile.airportCode,'drafts','current')) } catch {}
       navigate('/reports')
