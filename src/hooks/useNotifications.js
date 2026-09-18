@@ -4,7 +4,7 @@ import { db } from '../firebase'
 
 // Firebase Messaging VAPID key — generate in Firebase Console
 // Console → Project Settings → Cloud Messaging → Web Push certificates → Generate key pair
-const VAPID_KEY = 'YOUR_VAPID_KEY_HERE'
+const VAPID_KEY = 'BEacrPKWhktL9NkrWQPlbNiqUblQwDFKx00X19MB48COJ2oauHW6x9pfaYRV5YNpK_or6lyzyoOZuGX8jjYKwjA'
 
 export function useNotifications(userId) {
   useEffect(() => {
