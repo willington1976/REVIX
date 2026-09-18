@@ -4,15 +4,18 @@ import { useNavigate } from 'react-router-dom'
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
 import { db } from '../firebase'
 import { AppFooter } from '../components/AppShell'
+import AlertsBanner from '../components/AlertsBanner'
+import { useNotifications } from '../hooks/useNotifications'
 
 const roleLabel = { superadmin: 'Super Admin', admin: 'Administrador', inspector: 'Inspector' }
 
 export default function Dashboard() {
-  const { profile, logout } = useAuth()
+  const { user, profile, logout } = useAuth()
   const navigate = useNavigate()
   const role = profile?.role || 'inspector'
   const [stats, setStats] = useState(null)
   const [loadingStats, setLoadingStats] = useState(true)
+  useNotifications(user?.uid)
 
   useEffect(() => {
     const loadStats = async () => {
@@ -84,6 +87,8 @@ export default function Dashboard() {
           SALIR
         </button>
       </div>
+
+      <AlertsBanner/>
 
       {/* Hero card — Estado del mes */}
       <div className="mx-4 mb-5 card-highlight rounded-2xl border border-white/8 p-5"
