@@ -57,23 +57,23 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
   doc.line(40, 5, 40, 37)
   doc.line(W-45, 5, W-45, 15)
 
-  // FORMATO box
+  // FORMATO — full width gray band across top (from logo divider to right edge)
   doc.setFillColor(...LG)
-  doc.rect(W-45, 5, 40, 10, 'F')
-  doc.rect(W-45, 5, 40, 10)
-  doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...BK)
-  doc.text('FORMATO', W-25, 11.5, {align:'center'})
+  doc.rect(40, 5, W-10-35, 10, 'F')
+  doc.rect(40, 5, W-10-35, 10)
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...BK)
+  doc.text('FORMATO', 40+(W-10-35)/2, 11.5, {align:'center'})
 
   // Logo centered in cell (x:5 to 40 = 35mm wide)
-  const logoW=22, logoH=22, logoX=5+(35-logoW)/2, logoY=7
+  const logoW=26, logoH=26, logoX=5+(35-logoW)/2, logoY=6
   try {
     doc.addImage(AEROCIVIL_LOGO,'PNG',logoX,logoY,logoW,logoH)
   } catch(e) {}
 
-  // Title
-  doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...BK)
+  // Title — gray, not black, matching original
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(120,120,120)
   const cx = 40+(W-10-40)/2
-  doc.text('REVISION TECNICA DE EXTINTORES', cx, 19, {align:'center'})
+  doc.text('REVISION TECNICA DE EXTINTORES', cx, 21, {align:'center'})
   doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...DG)
   doc.text(`Aeropuerto: ${airportName}`, cx, 26, {align:'center'})
   doc.text(`Inspector: ${inspection.inspectorName}   |   Fecha: ${inspection.date}   |   Hora inicio: ${inspection.startTime||'--'}   Hora fin: ${inspection.endTime||'--'}`, cx, 31, {align:'center'})
@@ -230,7 +230,7 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
         // Multi-line vertical text reading bottom to top
         // angle:90 draws text going upward from textY
         // Line 0 = first word (bottom), Line 1 = second word (above it)
-        const lineGap = 10
+        const lineGap = 11.5
         doc.text(label[0], textX, textY,           {angle:90, align:'left'})
         doc.text(label[1], textX, textY - lineGap, {angle:90, align:'left'})
       } else {
