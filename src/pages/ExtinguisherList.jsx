@@ -5,13 +5,38 @@ import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { TopBar, AppFooter } from '../components/AppShell'
 
-function statusBadge(expiryDate) {
-  if (!expiryDate) return { label:'SIN FECHA', color:'#475569', bg:'#1E293B' }
-  const diff = (new Date(expiryDate) - new Date()) / (1000*60*60*24)
-  if (diff < 0)  return { label:'VENCIDO',   color:'#EF4444', bg:'#450A0A' }
-  if (diff < 30) return { label:'< 30 DÍAS', color:'#F59E0B', bg:'#431407' }
-  if (diff < 60) return { label:'< 60 DÍAS', color:'#FBBF24', bg:'#1C1A07' }
-  return           { label:'AL DÍA',    color:'#22C55E', bg:'#052E16' }
+function calcDiff(date) {
+  if (!date) return null
+  return (new Date(date) - new Date()) / (1000*60*60*24)
+}
+
+function hydroExpiry(lastHydroTest) {
+  if (!lastHydroTest) return null
+  const d = new Date(lastHydroTest)
+  d.setFullYear(d.getFullYear() + 5)
+  return d.toISOString().split('T')[0]
+}
+
+function statusBadge(ext) {
+  const agentDiff = calcDiff(ext.expiryDate)
+  const hydroDate = hydroExpiry(ext.lastHydroTest)
+  const hydroDiff = calcDiff(hydroDate)
+
+  // Collect both diffs — pick worst state
+  const diffs = []
+  if (agentDiff !== null) diffs.push({ diff: agentDiff, label: 'Agente' })
+  if (hydroDiff !== null) diffs.push({ diff: hydroDiff, label: 'Hidrost.' })
+
+  if (diffs.length === 0) return { label:'SIN FECHA', color:'#475569', bg:'#1E293B', detail:'' }
+
+  // Sort by worst (lowest diff first)
+  diffs.sort((a,b) => a.diff - b.diff)
+  const worst = diffs[0]
+
+  if (worst.diff < 0)  return { label:'VENCIDO',   color:'#EF4444', bg:'#450A0A', detail: worst.label }
+  if (worst.diff < 30) return { label:'< 30 DÍAS', color:'#F59E0B', bg:'#431407', detail: worst.label }
+  if (worst.diff < 60) return { label:'< 60 DÍAS', color:'#FBBF24', bg:'#1C1A07', detail: worst.label }
+  return                      { label:'AL DÍA',    color:'#22C55E', bg:'#052E16', detail: '' }
 }
 
 export default function ExtinguisherList() {
@@ -34,17 +59,14 @@ export default function ExtinguisherList() {
       e.type?.toLowerCase().includes(search.toLowerCase())
     if (!matchSearch) return false
     if (filter === 'all') return true
-    const diff = e.expiryDate ? (new Date(e.expiryDate) - new Date()) / (1000*60*60*24) : null
-    if (filter === 'expired') return diff !== null && diff < 0
-    if (filter === 'warning') return diff !== null && diff >= 0 && diff < 60
-    if (filter === 'ok') return diff === null || diff >= 60
+    const badge = statusBadge(e)
+    if (filter === 'expired') return badge.label === 'VENCIDO'
+    if (filter === 'warning') return badge.label === '< 30 DÍAS' || badge.label === '< 60 DÍAS'
+    if (filter === 'ok') return badge.label === 'AL DÍA' || badge.label === 'SIN FECHA'
     return true
   })
 
-  const expired = extinguishers.filter(e => {
-    const d = e.expiryDate ? (new Date(e.expiryDate)-new Date())/(1000*60*60*24) : null
-    return d !== null && d < 0
-  }).length
+  const expired = extinguishers.filter(e => statusBadge(e).label === 'VENCIDO').length
 
   return (
     <div className="min-h-screen bg-[#0F172A] pb-16">
@@ -111,7 +133,7 @@ export default function ExtinguisherList() {
       ) : (
         <div className="px-4 space-y-2 pb-4">
           {filtered.map(ext => {
-            const badge = statusBadge(ext.expiryDate)
+            const badge = statusBadge(ext)
             return (
               <div key={ext.id} onClick={() => !isInspector && navigate(`/extinguishers/${ext.id}`)} className="card-highlight rounded-xl border border-white/8 p-4 cursor-pointer active:scale-[0.98] transition-transform"
                    style={{background:'#1E293B', borderLeftColor:badge.color, borderLeftWidth:3}}>
