@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { collection, getDocs, query, where, orderBy } from 'firebase/firestore'
 import { db } from '../firebase'
 import { AppFooter } from '../components/AppShell'
+import { useOnlineStatus } from '../hooks/useOnlineStatus'
 import AlertsBanner from '../components/AlertsBanner'
 import { useNotifications } from '../hooks/useNotifications'
 
@@ -15,6 +16,8 @@ export default function Dashboard() {
   const role = profile?.role || 'inspector'
   const [stats, setStats] = useState(null)
   const [loadingStats, setLoadingStats] = useState(true)
+  const [showLogout, setShowLogout] = useState(false)
+  const online = useOnlineStatus()
   useNotifications(user?.uid)
 
   useEffect(() => {
@@ -98,7 +101,7 @@ export default function Dashboard() {
             <span style={{color:'#1D6FE8',marginLeft:6}}>Mi cuenta →</span>
           </p>
         </button>
-        <button onClick={logout}
+        <button onClick={()=>setShowLogout(true)}
           style={{padding:'6px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,0.08)',
                   background:'transparent',color:'#475569',fontSize:12,fontWeight:500,cursor:'pointer'}}>
           Salir
@@ -222,6 +225,55 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
+
+      {/* Offline banner */}
+      {!online && (
+        <div style={{position:'fixed',top:0,left:0,right:0,zIndex:100,
+                     background:'#3B2000',borderBottom:'1px solid rgba(180,83,9,0.4)',
+                     padding:'8px 16px',display:'flex',alignItems:'center',gap:8}}>
+          <svg width="14" height="14" fill="none" stroke="#FCD34D" strokeWidth="2" viewBox="0 0 24 24">
+            <path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"/>
+          </svg>
+          <p style={{fontSize:12,color:'#FCD34D',margin:0,fontFamily:'JetBrains Mono,monospace',
+                     textTransform:'uppercase',letterSpacing:'0.06em'}}>
+            Sin conexión — trabajando en modo local
+          </p>
+        </div>
+      )}
+
+      {/* Logout confirmation */}
+      {showLogout && (
+        <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',
+                     display:'flex',alignItems:'flex-end',justifyContent:'center',
+                     padding:'0 0 env(safe-area-inset-bottom,0)',zIndex:50}}>
+          <div style={{background:'#1A2235',border:'1px solid rgba(255,255,255,0.08)',
+                       borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,
+                       padding:'24px 20px 32px'}}>
+            <div style={{width:36,height:4,background:'rgba(255,255,255,0.1)',
+                         borderRadius:2,margin:'0 auto 20px'}}/>
+            <p style={{fontSize:16,fontWeight:700,color:'#F1F5F9',margin:'0 0 6px'}}>
+              ¿Cerrar sesión?
+            </p>
+            <p style={{fontSize:13,color:'#64748B',margin:'0 0 24px'}}>
+              Confirma que deseas salir de REVIX.
+            </p>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <button onClick={()=>setShowLogout(false)}
+                style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',
+                        background:'transparent',color:'#64748B',fontWeight:500,
+                        fontSize:14,cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
+                Cancelar
+              </button>
+              <button onClick={logout}
+                style={{minHeight:48,borderRadius:10,border:'none',
+                        background:'#DC2626',color:'white',fontWeight:600,
+                        fontSize:14,cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
+                Salir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <AppFooter/>
     </div>

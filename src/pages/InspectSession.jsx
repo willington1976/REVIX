@@ -319,7 +319,40 @@ export default function InspectSession() {
       </div>
 
       <div className="flex-1 px-4 pt-4 pb-4 flex flex-col gap-3">
-        {camError && <div className="rounded-xl px-4 py-3 border" style={{background:'#450A0A',borderColor:RED+'44'}}><p className="font-mono text-xs text-red-400">⚠ {camError}</p></div>}
+        {camError && (
+          <div style={{background:'#111827',border:'1px solid rgba(220,38,38,0.2)',
+                       borderRadius:12,padding:20,textAlign:'center'}}>
+            <div style={{width:48,height:48,borderRadius:12,background:'rgba(220,38,38,0.08)',
+                         border:'1px solid rgba(220,38,38,0.2)',
+                         display:'flex',alignItems:'center',justifyContent:'center',
+                         margin:'0 auto 12px'}}>
+              <svg width="22" height="22" fill="none" stroke="#F87171" strokeWidth="1.8" viewBox="0 0 24 24">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                <line x1="1" y1="1" x2="23" y2="23"/>
+              </svg>
+            </div>
+            <p style={{fontSize:14,fontWeight:600,color:'#F1F5F9',margin:'0 0 6px'}}>
+              Cámara no disponible
+            </p>
+            <p style={{fontSize:12,color:'#64748B',margin:'0 0 16px',lineHeight:1.6}}>
+              REVIX necesita acceso a la cámara trasera para escanear QRs.
+            </p>
+            <div style={{background:'#0A0F1E',borderRadius:8,padding:'12px 14px',textAlign:'left'}}>
+              <p style={{fontSize:11,fontWeight:600,color:'#94A3B8',margin:'0 0 6px',
+                         textTransform:'uppercase',letterSpacing:'0.06em'}}>Cómo activarlo</p>
+              <p style={{fontSize:12,color:'#64748B',margin:0,lineHeight:1.7}}>
+                Android: Configuración → Aplicaciones → Chrome → Permisos → Cámara → Permitir<br/>
+                iOS: Configuración → Safari → Cámara → Permitir
+              </p>
+            </div>
+            <button onClick={()=>window.location.reload()}
+              style={{marginTop:14,minHeight:40,padding:'0 20px',borderRadius:8,border:'none',
+                      background:'#1D6FE8',color:'white',fontWeight:600,fontSize:13,
+                      cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
+              Reintentar
+            </button>
+          </div>
+        )}
         {scanError && <div className="rounded-xl px-4 py-3 border" style={{background:'#1C1A07',borderColor:AMBER+'44'}}><p className="font-mono text-xs text-amber-400">⚠ {scanError}</p></div>}
 
         {/* Camera */}

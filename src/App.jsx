@@ -9,6 +9,7 @@ import Reports from './pages/Reports'
 import UserManagement from './pages/UserManagement'
 import ExtinguisherDetail from './pages/ExtinguisherDetail'
 import MyAccount from './pages/MyAccount'
+import NotFound from './pages/NotFound'
 
 function PrivateRoute({ children, roles }) {
   const { user, profile } = useAuth()
@@ -30,7 +31,7 @@ function AppRoutes() {
       <Route path="/reports" element={<PrivateRoute><Reports /></PrivateRoute>} />
       <Route path="/users" element={<PrivateRoute roles={['admin','superadmin']}><UserManagement /></PrivateRoute>} />
       <Route path="/account" element={<PrivateRoute><MyAccount /></PrivateRoute>} />
-      <Route path="*" element={<Navigate to="/" />} />
+      <Route path="*" element={<NotFound/>} />
     </Routes>
   )
 }
