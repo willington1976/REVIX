@@ -192,9 +192,23 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
     didDrawCell(data) {
       // Only act on header row 2 (rowIndex 1) for vertical columns
       if (data.section !== 'head') return
-      if (data.row.index !== 1) return
 
       const ci = data.column.index
+
+      // CAPACIDAD is rowSpan:2 starting at row 0 — handle separately
+      if (data.row.index === 0 && ci === 7) {
+        const { x, y, width, height } = data.cell
+        doc.setFillColor(255,255,255)
+        doc.rect(x+0.1, y+0.1, width-0.2, height-0.2, 'F')
+        doc.setFont('helvetica','bold')
+        doc.setFontSize(5.5)
+        doc.setTextColor(0,0,0)
+        doc.text('CAPACIDAD', x+width/2, y+height-2, {angle:90, align:'left'})
+        return
+      }
+
+      if (data.row.index !== 1) return
+
       const label = VERTICAL_COLS[ci]
       if (!label) return
 
@@ -216,7 +230,7 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
         // Multi-line vertical text reading bottom to top
         // angle:90 draws text going upward from textY
         // Line 0 = first word (bottom), Line 1 = second word (above it)
-        const lineGap = 4.5
+        const lineGap = 13
         doc.text(label[0], textX, textY,           {angle:90, align:'left'})
         doc.text(label[1], textX, textY - lineGap, {angle:90, align:'left'})
       } else {
