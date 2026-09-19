@@ -28,32 +28,27 @@ const AIRPORTS_CO = [
 ]
 
 const secondaryApp = initializeApp({
-  apiKey:            import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain:        import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId:         import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket:     import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId:             import.meta.env.VITE_FIREBASE_APP_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 }, 'secondary')
 const secondaryAuth = getAuth(secondaryApp)
 
-const ROLE_CONFIG = {
+const ROLE_CFG = {
   superadmin: { label:'Super Admin', color:'#F59E0B', bg:'#451A03' },
-  admin:       { label:'Administrador', color:'#2563EB', bg:'#1E3A5F' },
-  inspector:   { label:'Inspector', color:'#22C55E', bg:'#052E16' },
+  admin:      { label:'Admin',       color:'#60A5FA', bg:'#1E3A5F' },
+  inspector:  { label:'Inspector',   color:'#4ADE80', bg:'#052E16' },
 }
 
-const inputCls = "w-full bg-[#0F172A] border border-white/10 text-white rounded-xl px-4 text-sm focus:outline-none focus:border-[#2563EB] transition-colors font-mono"
-const selectCls = inputCls
-
-function Field({ label, children }) {
-  return (
-    <div>
-      <label className="font-mono text-[10px] text-slate-500 uppercase tracking-widest block mb-2">{label}</label>
-      {children}
-    </div>
-  )
+const inputStyle = {
+  width:'100%', background:'#0A0F1E', border:'1px solid rgba(255,255,255,0.08)',
+  color:'#F1F5F9', borderRadius:10, padding:'0 16px', fontSize:14,
+  minHeight:48, outline:'none', fontFamily:'Inter,sans-serif'
 }
+const selectStyle = { ...inputStyle, cursor:'pointer' }
 
 export default function UserManagement() {
   const { user, profile } = useAuth()
@@ -62,10 +57,13 @@ export default function UserManagement() {
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [sheet, setSheet] = useState(null) // user object for bottom sheet
   const [confirmDelete, setConfirmDelete] = useState(null)
   const [form, setForm] = useState({ name:'', email:'', password:'', role:'inspector', airportCode:'', airportName:'' })
+
   const isSuperAdmin = profile?.role === 'superadmin'
   const isAdmin = profile?.role === 'admin' || isSuperAdmin
+  const [confirmDelete2, setConfirmDelete2] = useState(null)
 
   useEffect(() => { loadUsers() }, [])
 
@@ -78,11 +76,9 @@ export default function UserManagement() {
   }
 
   const set = (k,v) => setForm(p=>({...p,[k]:v}))
-
   const handleAirportChange = (code) => {
-    const airport = AIRPORTS_CO.find(a=>a.code===code)
-    set('airportCode', code)
-    set('airportName', airport?.name||code)
+    const a = AIRPORTS_CO.find(a=>a.code===code)
+    set('airportCode',code); set('airportName',a?.name||code)
   }
 
   const handleCreate = async () => {
@@ -97,7 +93,7 @@ export default function UserManagement() {
       })
       await secondaryAuth.signOut()
       setShowForm(false)
-      setForm({ name:'', email:'', password:'', role:'inspector', airportCode:'', airportName:'' })
+      setForm({name:'',email:'',password:'',role:'inspector',airportCode:'',airportName:''})
       loadUsers()
     } catch(err) {
       alert(err.code==='auth/email-already-in-use' ? 'Correo ya registrado' : 'Error: '+err.message)
@@ -105,131 +101,114 @@ export default function UserManagement() {
   }
 
   const handleTransfer = async (userId, newCode) => {
-    const airport = AIRPORTS_CO.find(a=>a.code===newCode)
-    await updateDoc(doc(db,'users',userId), { airportCode:newCode, airportName:airport?.name||newCode })
-    loadUsers()
-  }
-
-
-  const handleDeleteUser = async (u) => {
-    try {
-      await deleteDoc(doc(db,'users',u.id))
-      setConfirmDelete(null)
-      loadUsers()
-    } catch(err) { alert('Error: '+err.message) }
-  }
-
-  const handleToggleActive = async (u) => {
-    await updateDoc(doc(db,'users',u.id), { active: !(u.active !== false) })
-    loadUsers()
+    const a = AIRPORTS_CO.find(a=>a.code===newCode)
+    await updateDoc(doc(db,'users',userId), { airportCode:newCode, airportName:a?.name||newCode })
+    setSheet(null); loadUsers()
   }
 
   const handleChangeRole = async (userId, newRole) => {
-    if (!newRole) return
-    await updateDoc(doc(db,'users',userId), { role: newRole })
-    loadUsers()
+    await updateDoc(doc(db,'users',userId), { role:newRole })
+    setSheet(null); loadUsers()
   }
 
-  // Group users by airport
+  const handleToggleActive = async (u) => {
+    await updateDoc(doc(db,'users',u.id), { active:!(u.active!==false) })
+    setSheet(null); loadUsers()
+  }
+
+  const handleDeleteUser = async (u) => {
+    await deleteDoc(doc(db,'users',u.id))
+    setConfirmDelete(null); setSheet(null); loadUsers()
+  }
+
   const grouped = users.reduce((acc,u) => {
-    const key = u.airportCode||'Sin aeropuerto'
-    if (!acc[key]) acc[key]=[]
-    acc[key].push(u)
+    const k = u.airportCode||'Sin aeropuerto'
+    if (!acc[k]) acc[k]=[]
+    acc[k].push(u)
     return acc
   }, {})
 
+  // ── NEW USER FORM ─────────────────────────────────────
   if (showForm) return (
-    <div className="min-h-screen bg-[#0F172A] pb-16">
-      <div className="h-0.5 w-full" style={{background:'linear-gradient(90deg,#2563EB,#16A34A)'}}/>
-      <TopBar title="Nuevo Usuario" back/>
+    <div style={{minHeight:'100vh',background:'#0A0F1E',paddingBottom:80}}>
+      <TopBar title="Nuevo usuario" back/>
+      <div style={{padding:'20px 16px',display:'flex',flexDirection:'column',gap:16}}>
 
-      <div className="px-4 py-5 space-y-4">
-        {/* Role selector — visual cards */}
-        <Field label="Rol">
-          <div className="grid grid-cols-3 gap-2">
+        {/* Role selector */}
+        <div>
+          <p style={{fontSize:11,fontWeight:500,color:'#64748B',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8}}>Rol</p>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
             {[
-              { v:'inspector', l:'Inspector', icon:'🔍' },
-              { v:'admin',     l:'Admin',     icon:'⚙️' },
-              ...(isSuperAdmin ? [{ v:'superadmin', l:'SuperAdmin', icon:'👑' }] : []),
+              {v:'inspector',l:'Inspector',icon:'🔍'},
+              {v:'admin',    l:'Admin',    icon:'⚙️'},
+              ...(isSuperAdmin?[{v:'superadmin',l:'Super Admin',icon:'👑'}]:[]),
             ].map(r => {
-              const cfg = ROLE_CONFIG[r.v]
-              const active = form.role === r.v
+              const cfg = ROLE_CFG[r.v]
+              const active = form.role===r.v
               return (
-                <button key={r.v} onClick={() => set('role', r.v)}
-                  className="rounded-xl border p-3 text-center transition-all"
-                  style={{
-                    background: active ? cfg.bg : '#1E293B',
-                    borderColor: active ? cfg.color : 'rgba(255,255,255,0.08)',
-                    minHeight: 64,
-                  }}>
-                  <span className="text-xl block mb-1">{r.icon}</span>
-                  <span className="font-mono text-[10px] uppercase tracking-wider"
-                        style={{color: active ? cfg.color : '#64748B'}}>{r.l}</span>
+                <button key={r.v} onClick={()=>set('role',r.v)}
+                  style={{padding:'12px 8px',borderRadius:10,cursor:'pointer',textAlign:'center',
+                          background:active?cfg.bg:'#111827',
+                          border:`1px solid ${active?cfg.color:'rgba(255,255,255,0.06)'}`,
+                          transition:'all .15s'}}>
+                  <span style={{fontSize:18,display:'block',marginBottom:4}}>{r.icon}</span>
+                  <span style={{fontSize:11,fontWeight:600,color:active?cfg.color:'#64748B'}}>{r.l}</span>
                 </button>
               )
             })}
           </div>
-        </Field>
+        </div>
 
-        <Field label="Nombre completo">
-          <input value={form.name} onChange={e=>set('name',e.target.value)}
-            placeholder="Pedro Bombero García"
-            className={inputCls} style={{minHeight:48}}/>
-        </Field>
+        {[
+          {label:'Nombre completo', key:'name', placeholder:'Pedro García', type:'text'},
+          {label:'Correo electrónico', key:'email', placeholder:'inspector@aerocivil.gov.co', type:'email'},
+          {label:'Contraseña temporal', key:'password', placeholder:'Mínimo 6 caracteres', type:'password'},
+        ].map(f => (
+          <div key={f.key}>
+            <p style={{fontSize:11,fontWeight:500,color:'#64748B',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8}}>{f.label}</p>
+            <input type={f.type} value={form[f.key]} onChange={e=>set(f.key,e.target.value)}
+              placeholder={f.placeholder} style={inputStyle}/>
+          </div>
+        ))}
 
-        <Field label="Correo electrónico">
-          <input type="email" value={form.email} onChange={e=>set('email',e.target.value)}
-            placeholder="inspector@aerocivil.gov.co"
-            className={inputCls} style={{minHeight:48}}/>
-        </Field>
-
-        <Field label="Contraseña temporal">
-          <input type="password" value={form.password} onChange={e=>set('password',e.target.value)}
-            placeholder="Mínimo 6 caracteres"
-            className={inputCls} style={{minHeight:48}}/>
-        </Field>
-
-        <Field label="Aeropuerto asignado">
-          <select value={form.airportCode} onChange={e=>handleAirportChange(e.target.value)}
-            className={selectCls} style={{minHeight:48}}>
+        <div>
+          <p style={{fontSize:11,fontWeight:500,color:'#64748B',textTransform:'uppercase',letterSpacing:'0.08em',marginBottom:8}}>Aeropuerto</p>
+          <select value={form.airportCode} onChange={e=>handleAirportChange(e.target.value)} style={selectStyle}>
             <option value="">Selecciona aeropuerto</option>
-            {AIRPORTS_CO.map(a=>(
-              <option key={a.code} value={a.code}>{a.code} — {a.name}</option>
-            ))}
+            {AIRPORTS_CO.map(a=><option key={a.code} value={a.code}>{a.code} — {a.name}</option>)}
           </select>
-        </Field>
+        </div>
 
-        {/* Preview card */}
+        {/* Preview */}
         {form.name && form.airportCode && (
-          <div className="card-highlight rounded-xl border border-white/8 p-4" style={{background:'#1E293B'}}>
-            <p className="font-mono text-[10px] text-slate-500 uppercase tracking-widest mb-2">Vista previa</p>
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold"
-                   style={{background:ROLE_CONFIG[form.role].bg, color:ROLE_CONFIG[form.role].color}}>
+          <div style={{background:'#111827',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:16,display:'flex',alignItems:'center',gap:12}}>
+            <div style={{width:40,height:40,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',
+                         background:ROLE_CFG[form.role].bg,flexShrink:0}}>
+              <span style={{fontSize:16,fontWeight:700,color:ROLE_CFG[form.role].color}}>
                 {form.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <p className="text-white font-semibold text-sm">{form.name}</p>
-                <p className="font-mono text-xs text-slate-500">{form.email||'—'} · {form.airportCode}</p>
-              </div>
-              <span className="ml-auto font-mono text-[10px] px-2 py-1 rounded"
-                    style={{background:ROLE_CONFIG[form.role].bg, color:ROLE_CONFIG[form.role].color}}>
-                {ROLE_CONFIG[form.role].label}
               </span>
             </div>
+            <div>
+              <p style={{fontSize:14,fontWeight:600,color:'#F1F5F9',margin:0}}>{form.name}</p>
+              <p style={{fontSize:12,color:'#64748B',margin:'2px 0 0'}}>{form.email||'—'}</p>
+            </div>
+            <span style={{marginLeft:'auto',fontSize:11,fontWeight:600,padding:'3px 8px',borderRadius:6,
+                          background:ROLE_CFG[form.role].bg,color:ROLE_CFG[form.role].color}}>
+              {ROLE_CFG[form.role].label}
+            </span>
           </div>
         )}
 
-        <div className="flex gap-3 pt-2">
-          <button onClick={() => setShowForm(false)}
-            className="flex-1 border border-white/10 text-slate-500 hover:text-white font-mono rounded-xl text-sm transition-colors"
-            style={{minHeight:48}}>
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:4}}>
+          <button onClick={()=>setShowForm(false)}
+            style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',
+                    background:'transparent',color:'#64748B',fontWeight:500,fontSize:14,cursor:'pointer'}}>
             Cancelar
           </button>
           <button onClick={handleCreate} disabled={creating}
-            className="flex-1 bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white font-semibold rounded-xl text-sm transition-colors"
-            style={{minHeight:48}}>
-            {creating ? 'Creando...' : 'Crear usuario'}
+            style={{minHeight:48,borderRadius:10,border:'none',background:'#1D6FE8',
+                    color:'white',fontWeight:600,fontSize:14,cursor:'pointer',opacity:creating?.7:1}}>
+            {creating?'Creando...':'Crear usuario'}
           </button>
         </div>
       </div>
@@ -237,159 +216,206 @@ export default function UserManagement() {
     </div>
   )
 
+  // ── MAIN LIST ─────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0F172A] pb-16">
-      <div className="h-0.5 w-full" style={{background:'linear-gradient(90deg,#2563EB,#16A34A)'}}/>
-      <TopBar title="Gestión de Usuarios" back/>
+    <div style={{minHeight:'100vh',background:'#0A0F1E',paddingBottom:80}}>
+      <TopBar title="Gestión de Usuarios"
+        back
+        right={
+          <button onClick={()=>setShowForm(true)}
+            style={{width:36,height:36,borderRadius:8,border:'none',background:'#1D6FE8',
+                    color:'white',fontSize:20,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            +
+          </button>
+        }
+      />
 
-      {/* Summary strip */}
-      <div className="px-4 py-3 flex items-center gap-3">
-        <div className="card-highlight flex-1 rounded-xl border border-white/8 px-4 py-3 flex items-center justify-between"
-             style={{background:'#1E293B'}}>
-          <div>
-            <p className="font-mono text-2xl font-bold text-white">{users.length}</p>
-            <p className="font-mono text-[10px] text-slate-500 uppercase tracking-wider">Usuarios activos</p>
-          </div>
-          <div className="text-right">
-            <p className="font-mono text-lg font-bold text-blue-400">{Object.keys(grouped).length}</p>
-            <p className="font-mono text-[10px] text-slate-500 uppercase tracking-wider">Aeropuertos</p>
-          </div>
+      {/* Summary */}
+      <div style={{padding:'16px 16px 8px',display:'flex',gap:8}}>
+        <div style={{flex:1,background:'#111827',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:'12px 16px'}}>
+          <p style={{fontFamily:'JetBrains Mono,monospace',fontSize:24,fontWeight:700,color:'#F1F5F9',margin:0}}>{users.length}</p>
+          <p style={{fontSize:11,color:'#64748B',margin:'2px 0 0',textTransform:'uppercase',letterSpacing:'0.06em'}}>Usuarios activos</p>
         </div>
-        <button onClick={() => setShowForm(true)}
-          className="flex items-center justify-center w-14 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-2xl transition-colors flex-shrink-0"
-          style={{height:64}}>
-          +
-        </button>
+        <div style={{flex:1,background:'#111827',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:'12px 16px'}}>
+          <p style={{fontFamily:'JetBrains Mono,monospace',fontSize:24,fontWeight:700,color:'#60A5FA',margin:0}}>{Object.keys(grouped).length}</p>
+          <p style={{fontSize:11,color:'#64748B',margin:'2px 0 0',textTransform:'uppercase',letterSpacing:'0.06em'}}>Aeropuertos</p>
+        </div>
       </div>
 
-      {/* User list grouped by airport */}
+      {/* User list */}
       {loading ? (
-        <div className="px-4 space-y-3 pt-2">
-          {[1,2,3].map(i=><div key={i} className="skeleton h-20 rounded-xl"/>)}
+        <div style={{padding:'8px 16px',display:'flex',flexDirection:'column',gap:8}}>
+          {[1,2,3].map(i=><div key={i} className="skeleton" style={{height:72}}/>)}
         </div>
       ) : (
-        <div className="px-4 pt-2 pb-4 space-y-5">
-          {Object.entries(grouped).map(([airportCode, airportUsers]) => (
-            <div key={airportCode}>
-              <p className="font-mono text-[10px] uppercase tracking-widest text-slate-600 mb-2 px-1">
-                {airportCode} · {AIRPORTS_CO.find(a=>a.code===airportCode)?.name||airportCode}
+        <div style={{padding:'8px 16px',display:'flex',flexDirection:'column',gap:20}}>
+          {Object.entries(grouped).map(([code, airportUsers]) => (
+            <div key={code}>
+              <p style={{fontSize:11,fontWeight:500,color:'#334155',textTransform:'uppercase',
+                         letterSpacing:'0.08em',marginBottom:8,fontFamily:'JetBrains Mono,monospace'}}>
+                {code} · {AIRPORTS_CO.find(a=>a.code===code)?.name||code}
               </p>
-              <div className="space-y-2">
+              <div style={{display:'flex',flexDirection:'column',gap:2}}>
                 {airportUsers.map(u => {
-                  const cfg = ROLE_CONFIG[u.role] || ROLE_CONFIG.inspector
+                  const cfg = ROLE_CFG[u.role]||ROLE_CFG.inspector
+                  const isMe = u.id === user?.uid
                   return (
-                    <div key={u.id} className="card-highlight rounded-xl border border-white/8 p-4"
-                         style={{background:'#1E293B'}}>
-                      <div className="flex items-center gap-3">
-                        {/* Avatar */}
-                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-base font-bold flex-shrink-0"
-                             style={{background:cfg.bg, color:cfg.color}}>
+                    <div key={u.id}
+                      style={{background:'#111827',border:'1px solid rgba(255,255,255,0.06)',
+                              borderRadius:12,padding:'14px 16px',display:'flex',alignItems:'center',gap:12,
+                              opacity:u.active===false?0.5:1}}>
+                      {/* Avatar */}
+                      <div style={{width:42,height:42,borderRadius:10,flexShrink:0,
+                                   display:'flex',alignItems:'center',justifyContent:'center',
+                                   background:cfg.bg,border:`1px solid ${cfg.color}33`}}>
+                        <span style={{fontSize:16,fontWeight:700,color:cfg.color}}>
                           {u.name?.charAt(0)?.toUpperCase()||'?'}
+                        </span>
+                      </div>
+                      {/* Info */}
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{display:'flex',alignItems:'center',gap:6}}>
+                          <p style={{fontSize:14,fontWeight:600,color:'#F1F5F9',margin:0,
+                                     overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                            {u.name}
+                          </p>
+                          {isMe && <span style={{fontSize:10,color:'#475569'}}>(tú)</span>}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-white font-semibold text-sm leading-tight">{u.name}</p>
-                          <p className="font-mono text-xs text-slate-500 truncate mt-0.5">{u.email}</p>
-                          <div className="flex gap-1.5 mt-1 flex-wrap">
-                            <span className="inline-block font-mono text-[10px] px-2 py-0.5 rounded"
-                                  style={{background:cfg.bg, color:cfg.color}}>
-                              {cfg.label}
+                        <p style={{fontSize:12,color:'#64748B',margin:'2px 0 0',
+                                   overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>
+                          {u.email}
+                        </p>
+                        <div style={{display:'flex',gap:6,marginTop:6}}>
+                          <span style={{fontSize:11,fontWeight:600,padding:'2px 8px',borderRadius:6,
+                                        background:cfg.bg,color:cfg.color}}>
+                            {cfg.label}
+                          </span>
+                          {u.active===false && (
+                            <span style={{fontSize:11,fontWeight:600,padding:'2px 8px',borderRadius:6,
+                                          background:'#1C1A07',color:'#D97706'}}>
+                              INACTIVO
                             </span>
-                            {u.active === false && (
-                              <span className="inline-block font-mono text-[10px] px-2 py-0.5 rounded"
-                                    style={{background:'#1C1A07', color:'#D97706'}}>
-                                INACTIVO
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                        {/* Transfer dropdown — superadmin only */}
-                        <div className="flex flex-col gap-1.5 flex-shrink-0">
-                          {isSuperAdmin && u.id !== user?.uid && (
-                            <select
-                              value={u.role}
-                              onChange={e => handleChangeRole(u.id, e.target.value)}
-                              className="text-[10px] font-mono bg-[#0F172A] text-slate-400 border border-white/10 rounded-lg px-2 focus:outline-none"
-                              style={{minHeight:32,
-                                color: u.role==='superadmin'?'#F59E0B': u.role==='admin'?'#2563EB':'#16A34A'}}>
-                              <option value="inspector">Inspector</option>
-                              <option value="admin">Admin</option>
-                              <option value="superadmin">SuperAdmin</option>
-                            </select>
-                          )}
-                          {isSuperAdmin && (
-                            <select
-                              onChange={e => e.target.value && handleTransfer(u.id, e.target.value)}
-                              defaultValue=""
-                              className="text-[10px] font-mono bg-[#0F172A] text-slate-400 border border-white/10 rounded-lg px-2 focus:outline-none"
-                              style={{minHeight:32}}>
-                              <option value="">Trasladar</option>
-                              {AIRPORTS_CO.filter(a=>a.code!==u.airportCode).map(a=>(
-                                <option key={a.code} value={a.code}>{a.code}</option>
-                              ))}
-                            </select>
-                          )}
-                          {isAdmin && u.role !== 'superadmin' && (
-                            <div className="flex gap-1.5">
-                              <button
-                                onClick={() => handleToggleActive(u)}
-                                className="font-mono text-[10px] px-2 rounded-lg border flex-1"
-                                style={{minHeight:28,
-                                  background: u.active===false ? '#1C1A07' : '#052E16',
-                                  color: u.active===false ? '#D97706' : '#16A34A',
-                                  borderColor: u.active===false ? '#D9770644' : '#16A34A44'}}>
-                                {u.active===false ? 'Activar' : 'Desactivar'}
-                              </button>
-                              {isSuperAdmin && (
-                                <button
-                                  onClick={() => setConfirmDelete(u)}
-                                  className="font-mono text-[10px] px-2 rounded-lg border"
-                                  style={{minHeight:28, background:'#450A0A22', color:'#EF4444', borderColor:'#EF444433'}}>
-                                  Eliminar
-                                </button>
-                              )}
-                            </div>
                           )}
                         </div>
                       </div>
+                      {/* Three dots — only for non-self and admin */}
+                      {isAdmin && !isMe && (
+                        <button onClick={()=>setSheet(u)}
+                          style={{width:36,height:36,borderRadius:8,border:'1px solid rgba(255,255,255,0.08)',
+                                  background:'rgba(255,255,255,0.04)',cursor:'pointer',
+                                  display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
+                                  color:'#64748B',fontSize:18,fontWeight:700}}>
+                          ⋮
+                        </button>
+                      )}
                     </div>
                   )
                 })}
               </div>
             </div>
           ))}
-          {users.length === 0 && (
-            <div className="text-center py-16">
-              <p className="font-mono text-slate-600 text-sm uppercase tracking-widest">0 USUARIOS</p>
-            </div>
+          {users.length===0&&!loading&&(
+            <p style={{textAlign:'center',color:'#334155',fontSize:13,padding:'48px 0'}}>Sin usuarios registrados</p>
           )}
         </div>
       )}
-      {/* Delete user modal */}
+
+      {/* BOTTOM SHEET */}
+      {sheet && (
+        <div className="backdrop" onClick={()=>setSheet(null)}>
+          <div className="bottom-sheet" onClick={e=>e.stopPropagation()}>
+            <div className="sheet-handle"/>
+
+            {/* User info in sheet */}
+            <div style={{padding:'0 20px 16px',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+              <p style={{fontSize:15,fontWeight:600,color:'#F1F5F9',margin:0}}>{sheet.name}</p>
+              <p style={{fontSize:12,color:'#64748B',margin:'2px 0 0'}}>{sheet.email}</p>
+              <p style={{fontSize:11,fontWeight:600,marginTop:6,fontFamily:'JetBrains Mono,monospace',color:'#475569'}}>
+                {sheet.airportCode} · {ROLE_CFG[sheet.role]?.label}
+              </p>
+            </div>
+
+            {/* Change role */}
+            {isSuperAdmin && (
+              <div style={{padding:'8px 20px',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+                <p style={{fontSize:11,color:'#475569',textTransform:'uppercase',letterSpacing:'0.08em',margin:'8px 0 10px'}}>Cambiar rol</p>
+                <div style={{display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:6}}>
+                  {['inspector','admin','superadmin'].map(r => {
+                    const cfg = ROLE_CFG[r]
+                    const active = sheet.role===r
+                    return (
+                      <button key={r} onClick={()=>handleChangeRole(sheet.id,r)}
+                        style={{padding:'8px 4px',borderRadius:8,cursor:'pointer',textAlign:'center',
+                                background:active?cfg.bg:'rgba(255,255,255,0.03)',
+                                border:`1px solid ${active?cfg.color:'rgba(255,255,255,0.06)'}`,
+                                fontSize:11,fontWeight:600,color:active?cfg.color:'#64748B'}}>
+                        {cfg.label}
+                      </button>
+                    )
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Transfer */}
+            {isSuperAdmin && (
+              <div style={{padding:'8px 20px',borderBottom:'1px solid rgba(255,255,255,0.04)'}}>
+                <p style={{fontSize:11,color:'#475569',textTransform:'uppercase',letterSpacing:'0.08em',margin:'8px 0 10px'}}>Trasladar a</p>
+                <select onChange={e=>e.target.value&&handleTransfer(sheet.id,e.target.value)}
+                  defaultValue=""
+                  style={{...selectStyle,minHeight:40,fontSize:13}}>
+                  <option value="">Selecciona aeropuerto</option>
+                  {AIRPORTS_CO.filter(a=>a.code!==sheet.airportCode).map(a=>(
+                    <option key={a.code} value={a.code}>{a.code} — {a.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* Actions */}
+            <div>
+              <div className="sheet-action" onClick={()=>handleToggleActive(sheet)}>
+                <span style={{fontSize:18}}>{sheet.active===false?'✅':'⏸'}</span>
+                <span>{sheet.active===false?'Activar usuario':'Desactivar usuario'}</span>
+              </div>
+              {isSuperAdmin && (
+                <div className="sheet-action danger" onClick={()=>{ setConfirmDelete(sheet); setSheet(null) }}>
+                  <span style={{fontSize:18}}>🗑</span>
+                  <span>Eliminar usuario</span>
+                </div>
+              )}
+              <div className="sheet-action" onClick={()=>setSheet(null)}
+                   style={{color:'#475569',borderTop:'1px solid rgba(255,255,255,0.04)'}}>
+                <span style={{fontSize:18}}>✕</span>
+                <span>Cancelar</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete confirmation */}
       {confirmDelete && (
-        <div className="fixed inset-0 flex items-end justify-center z-50 px-4 pb-6"
-             style={{background:'rgba(0,0,0,0.85)'}}>
-          <div className="card-highlight w-full max-w-md rounded-2xl border p-5"
-               style={{background:'#1C0A0A', borderColor:'#EF444444'}}>
-            <p className="font-bold text-base mb-1" style={{color:'#EF4444'}}>⚠ Eliminar usuario</p>
-            <p className="text-slate-300 text-sm mb-1">
-              ¿Eliminar a <span className="font-bold text-white">{confirmDelete.name}</span>?
+        <div className="backdrop">
+          <div style={{background:'#1A2235',border:'1px solid rgba(220,38,38,0.3)',borderRadius:'20px 20px 0 0',
+                       width:'100%',maxWidth:480,padding:'24px 20px 32px'}}>
+            <p style={{fontSize:16,fontWeight:700,color:'#F87171',margin:'0 0 6px'}}>⚠ Eliminar usuario</p>
+            <p style={{fontSize:14,color:'#94A3B8',margin:'0 0 4px'}}>
+              ¿Eliminar a <strong style={{color:'#F1F5F9'}}>{confirmDelete.name}</strong>?
             </p>
-            <p className="font-mono text-xs text-slate-500 mb-4">
-              {confirmDelete.email} · {confirmDelete.airportCode}
+            <p style={{fontSize:12,color:'#475569',margin:'0 0 20px'}}>
+              Esta acción es permanente. Los informes generados no se ven afectados.
             </p>
-            <p className="font-mono text-[10px] text-slate-600 mb-4">
-              Esta acción elimina el acceso permanentemente. Los informes generados por este usuario no se ven afectados.
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={() => setConfirmDelete(null)}
-                className="font-semibold rounded-xl text-sm border border-white/10 text-slate-400"
-                style={{minHeight:48}}>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
+              <button onClick={()=>setConfirmDelete(null)}
+                style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',
+                        background:'transparent',color:'#64748B',fontWeight:500,fontSize:14,cursor:'pointer'}}>
                 Cancelar
               </button>
-              <button onClick={() => handleDeleteUser(confirmDelete)}
-                className="font-bold rounded-xl text-sm"
-                style={{minHeight:48, background:'#EF4444', color:'white'}}>
-                Eliminar usuario
+              <button onClick={()=>handleDeleteUser(confirmDelete)}
+                style={{minHeight:48,borderRadius:10,border:'none',background:'#DC2626',
+                        color:'white',fontWeight:600,fontSize:14,cursor:'pointer'}}>
+                Eliminar
               </button>
             </div>
           </div>
