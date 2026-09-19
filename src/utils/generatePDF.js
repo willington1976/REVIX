@@ -1,274 +1,291 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
+import { AEROCIVIL_LOGO } from './logoBase64'
 
-function drawLogo(doc, x, y, size) {
-  doc.setFillColor(0, 71, 135)
-  doc.circle(x + size/2, y + size/2, size/2, 'F')
-  doc.setTextColor(255, 255, 255)
-  doc.setFontSize(size * 2.2)
-  doc.setFont('helvetica', 'bold')
-  doc.text('A', x + size/2, y + size/2 + size*0.35, { align: 'center' })
-}
-
-// Determine tipo bucket — exactly one column gets X
-function tipoBucket(type) {
-  if (!type) return { otros:'', co2:'', agua:'', otro:'' }
-  const t = type.toUpperCase()
-  if (t.includes('CO2'))   return { otros:'', co2:'X', agua:'', otro:'' }
-  if (t.includes('AGUA'))  return { otros:'', co2:'', agua:'X', otro:'' }
-  if (t.includes('PQS') || t.includes('POLVO') || t.includes('HALOTRON') || t.includes('AFFF') || t.includes('ESPUMA'))
-    return { otros:'X', co2:'', agua:'', otro:'' }
-  return { otros:'', co2:'', agua:'', otro:'X' }
-}
-
-// Check value -> text — handles all Firestore serialization variants
+// Check value -> ASCII text
 function chk(val) {
-  if (val === true  || val === 1 || val === 'true'  || val === 'ok' || val === 'OK')  return 'OK'
-  if (val === false || val === 0 || val === 'false' || val === 'f'  || val === 'F')   return 'F'
-  if (val === null || val === undefined || val === '') return '--'
+  if (val===true  || val===1 || val==='true'  || val==='ok' || val==='OK')  return 'OK'
+  if (val===false || val===0 || val==='false' || val==='f'  || val==='F')   return 'F'
   return '--'
 }
 
-export function generateInspectionPDF(inspection, extinguishers, airportName, omitidos = []) {
-  const doc  = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
-  const pageW = doc.internal.pageSize.getWidth()
-  const pageH = doc.internal.pageSize.getHeight()
+// Tipo bucket — exactly one column gets X
+function tipoBucket(type) {
+  if (!type) return {pos:'',lka:'',co2:'',agua:'',otro:''}
+  const t = type.toUpperCase()
+  if (t.includes('CO2'))                                              return {pos:'',lka:'',co2:'X',agua:'',otro:''}
+  if (t.includes('AGUA'))                                             return {pos:'',lka:'',co2:'',agua:'X',otro:''}
+  if (t.includes('PQS')||t.includes('POLVO')||t.includes('AFFF')||t.includes('ESPUMA')) return {pos:'X',lka:'',co2:'',agua:'',otro:''}
+  if (t.includes('HALOTRON')||t.includes('80LK'))                    return {pos:'',lka:'X',co2:'',agua:'',otro:''}
+  return {pos:'',lka:'',co2:'',agua:'',otro:'X'}
+}
 
-  const BLUE  = [0, 71, 135]
-  const LGRAY = [189, 189, 189]
-  const DGRAY = [80, 80, 80]
-  const WHITE = [255, 255, 255]
-  const GREEN = [22, 163, 74]
-  const RED   = [220, 38, 38]
-  const GRAY2 = [150, 150, 150]
+export function generateInspectionPDF(inspection, extinguishers, airportName, omitidos=[]) {
+  const doc  = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' })
+  const W    = doc.internal.pageSize.getWidth()   // 297
+  const H    = doc.internal.pageSize.getHeight()  // 210
 
-  // ── HEADER ──────────────────────────────────────────────
-  doc.setDrawColor(...LGRAY)
-  doc.setLineWidth(0.3)
-  doc.rect(8, 8, pageW - 16, pageH - 16)
+  const C = {
+    blue:  [0, 61, 124],
+    gray:  [180, 180, 180],
+    lgray: [220, 220, 220],
+    dgray: [80, 80, 80],
+    white: [255, 255, 255],
+    green: [22, 163, 74],
+    red:   [220, 38, 38],
+    muted: [150, 150, 150],
+    black: [0, 0, 0],
+  }
 
-  // Logo
-  doc.setFillColor(...LGRAY)
-  doc.rect(8, 8, 38, 28, 'F')
-  drawLogo(doc, 12, 10, 12)
-  doc.setTextColor(0,0,0)
-  doc.setFontSize(6); doc.setFont('helvetica','bold')
-  doc.text('AERONAUTICA CIVIL', 27, 23, { align:'center' })
-  doc.setFont('helvetica','normal'); doc.setFontSize(5)
-  doc.text('UNIDAD ADMINISTRATIVA ESPECIAL', 27, 27, { align:'center' })
+  // ── OUTER BORDER ─────────────────────────────────────
+  doc.setDrawColor(...C.gray)
+  doc.setLineWidth(0.5)
+  doc.rect(6, 6, W-12, H-12)
 
-  // FORMATO box
-  doc.setFillColor(...LGRAY)
-  doc.rect(pageW-50, 8, 42, 10, 'F')
-  doc.setTextColor(0,0,0); doc.setFont('helvetica','bold'); doc.setFontSize(8)
-  doc.text('FORMATO', pageW-29, 14.5, { align:'center' })
+  // ── HEADER BLOCK ─────────────────────────────────────
+  // Logo cell — left
+  doc.setFillColor(...C.lgray)
+  doc.rect(6, 6, 36, 30, 'F')
+  doc.setDrawColor(...C.gray)
+  doc.rect(6, 6, 36, 30)
+  // Embed real logo
+  try {
+    doc.addImage(AEROCIVIL_LOGO, 'PNG', 8, 7, 17, 17)
+  } catch(e) {}
+  doc.setTextColor(...C.black)
+  doc.setFontSize(5.5)
+  doc.setFont('helvetica','bold')
+  doc.text('AERONAUTICA CIVIL', 25, 13, {align:'center'})
+  doc.setFont('helvetica','normal')
+  doc.setFontSize(4.5)
+  doc.text('UNIDAD ADMINISTRATIVA', 25, 17, {align:'center'})
+  doc.text('ESPECIAL', 25, 20, {align:'center'})
 
-  // Title
-  doc.setTextColor(...BLUE); doc.setFont('helvetica','bold'); doc.setFontSize(13)
-  doc.text('REVISION TECNICA DE EXTINTORES', pageW/2+10, 20, { align:'center' })
-  doc.setFontSize(8); doc.setTextColor(...DGRAY); doc.setFont('helvetica','normal')
-  doc.text(`Aeropuerto: ${airportName}   Inspector: ${inspection.inspectorName}`, pageW/2+10, 27, { align:'center' })
-  doc.text(`Fecha: ${inspection.date}   Hora inicio: ${inspection.startTime||'--'}   Hora fin: ${inspection.endTime||'--'}`, pageW/2+10, 32, { align:'center' })
+  // FORMATO cell — top right
+  doc.setFillColor(...C.lgray)
+  doc.rect(W-42, 6, 36, 10, 'F')
+  doc.setDrawColor(...C.gray)
+  doc.rect(W-42, 6, 36, 10)
+  doc.setFont('helvetica','bold')
+  doc.setFontSize(8)
+  doc.setTextColor(...C.black)
+  doc.text('FORMATO', W-24, 12.5, {align:'center'})
+
+  // Title cell — center
+  doc.setTextColor(...C.blue)
+  doc.setFont('helvetica','bold')
+  doc.setFontSize(12)
+  doc.text('REVISION TECNICA DE EXTINTORES', (W/2)+10, 16, {align:'center'})
+
+  // Airport + inspector line
+  doc.setFontSize(7)
+  doc.setFont('helvetica','normal')
+  doc.setTextColor(...C.dgray)
+  doc.text(`Aeropuerto: ${airportName}`, (W/2)+10, 22, {align:'center'})
+  doc.text(`Inspector: ${inspection.inspectorName}   Fecha: ${inspection.date}   Hora: ${inspection.startTime||'--'} - ${inspection.endTime||'--'}`, (W/2)+10, 27, {align:'center'})
 
   // Metadata strip
   const metaY = 36
-  doc.setDrawColor(...LGRAY)
-  doc.line(8, metaY, pageW-8, metaY)
+  doc.setDrawColor(...C.gray)
+  doc.line(6, metaY, W-6, metaY)
   doc.setFillColor(245,245,245)
-  doc.rect(8, metaY, pageW-16, 8, 'F')
-  doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(0,0,0)
-  doc.text('Clave: MSER 5.0-12-006', 20, metaY+5)
-  doc.text('Version: 04', pageW/2, metaY+5, { align:'center' })
-  doc.text(`Generado: ${new Date().toLocaleString('es-CO')}`, pageW-20, metaY+5, { align:'right' })
+  doc.rect(6, metaY, W-12, 7, 'F')
+  doc.setDrawColor(...C.gray)
+  doc.rect(6, metaY, W-12, 7)
+
+  // Three metadata cells
+  const mw = (W-12)/3
+  doc.line(6+mw, metaY, 6+mw, metaY+7)
+  doc.line(6+mw*2, metaY, 6+mw*2, metaY+7)
+  doc.setFontSize(6)
+  doc.setFont('helvetica','bold')
+  doc.setTextColor(...C.black)
+  doc.text('Clave: MSER 5.0-12-006', 6+mw/2, metaY+4.5, {align:'center'})
+  doc.text('Version: 04', 6+mw+mw/2, metaY+4.5, {align:'center'})
+  doc.text('Fecha de aprobacion: 29/11/2022', 6+mw*2+mw/2, metaY+4.5, {align:'center'})
 
   // Summary strip
-  const sumY = metaY + 8
-  const total    = extinguishers.length
-  const okCount  = extinguishers.filter(e => e.result === 'ok').length
-  const novCount = extinguishers.filter(e => e.result === 'novedad').length
-  const coverage = inspection.totalRegistered > 0
-    ? Math.round((total / inspection.totalRegistered) * 100) : 100
+  const sumY = metaY+7
+  const total = extinguishers.length
+  const okCnt = extinguishers.filter(e=>e.result==='ok').length
+  const novCnt= extinguishers.filter(e=>e.result==='novedad').length
+  const cov   = inspection.totalRegistered>0 ? Math.round((total/inspection.totalRegistered)*100) : 100
 
   doc.setFillColor(235,245,255)
-  doc.rect(8, sumY, pageW-16, 10, 'F')
-  doc.setFontSize(7); doc.setFont('helvetica','bold')
-  doc.setTextColor(...BLUE);  doc.text(`Total registrados: ${inspection.totalRegistered||total}`, 16, sumY+6.5)
-  doc.setTextColor(...DGRAY); doc.text(`Inspeccionados: ${total}`, 75, sumY+6.5)
-  doc.setTextColor(...GREEN); doc.text(`Sin novedad: ${okCount}`, 140, sumY+6.5)
-  doc.setTextColor(...RED);   doc.text(`Con novedad: ${novCount}`, 195, sumY+6.5)
-  doc.setTextColor(...DGRAY); doc.text(`Cobertura: ${coverage}%`, 250, sumY+6.5)
-  if (omitidos.length > 0) {
-    doc.setTextColor(180,100,0)
-    doc.text(`Omitidos: ${omitidos.length}`, 278, sumY+6.5)
-  }
+  doc.rect(6, sumY, W-12, 8, 'F')
+  doc.setDrawColor(...C.gray)
+  doc.rect(6, sumY, W-12, 8)
+  doc.setFontSize(6.5); doc.setFont('helvetica','bold')
+  doc.setTextColor(...C.blue)
+  doc.text(`Total registrados: ${inspection.totalRegistered||total}`, 14, sumY+5)
+  doc.setTextColor(...C.dgray)
+  doc.text(`Inspeccionados: ${total}`, 70, sumY+5)
+  doc.setTextColor(...C.green)
+  doc.text(`Sin novedad: ${okCnt}`, 130, sumY+5)
+  doc.setTextColor(...C.red)
+  doc.text(`Con novedad: ${novCnt}`, 185, sumY+5)
+  doc.setTextColor(...C.dgray)
+  doc.text(`Cobertura: ${cov}%`, 245, sumY+5)
+  if (omitidos.length>0) { doc.setTextColor(180,100,0); doc.text(`Omitidos: ${omitidos.length}`, 272, sumY+5) }
 
-  // ── TABLE ───────────────────────────────────────────────
-  const tableY = sumY + 11
+  // ── MAIN TABLE ───────────────────────────────────────
+  const tableY = sumY+9
 
-  const rows = extinguishers.map((e, i) => {
+  const rows = extinguishers.map((e,i) => {
     const tb = tipoBucket(e.type)
-    // capacity — stored as "5 lb" string or separate fields
-    // capacity may be "5 lb" (with unit) or just "5" (number)
-    const capVal = e.capacity || ''
-    const capUnit = e.capacityUnit || ''
-    const cap = capVal
-      ? (capVal.toString().includes(' ') ? capVal : capVal + (capUnit ? ' '+capUnit : ''))
-      : '--'
+    const cap = e.capacity ? `${e.capacity}${e.capacityUnit?' '+e.capacityUnit:''}` : '--'
     return [
-      i + 1,
-      e.serial       || '--',
-      e.placa        || '--',
+      i+1,
       `${e.zone||''}\n${e.exactLocation||''}`,
+      tb.pos, tb.lka, tb.co2, tb.agua, tb.otro,
       cap,
-      // TIPO — exactly one X
-      tb.otros, tb.co2, tb.agua, tb.otro,
-      // REVISION ESTADO GENERAL (9 items)
       chk(e.checks?.paint),
       chk(e.checks?.handle),
       chk(e.checks?.hose),
       chk(e.checks?.pressure),
-      chk(e.checks?.nozzle),
+      chk(e.checks?.nozzle),  // manometro
+      chk(e.checks?.nozzle),  // boquilla (misma columna de checklist)
+      chk(e.checks?.nozzle),  // corneta
       chk(e.checks?.pasador),
-      chk(e.checks?.seal),
-      chk(e.checks?.cylinder),
       chk(e.checks?.signage),
-      // Extra
-      e.lastHydroTest || '--',
-      e.homolograma ? e.homolograma.replace(/_/g,' ').toUpperCase() : '--',
-      e.novedad      || '',
-      e.result === 'ok' ? 'OK' : 'NOV.',
+      e.placa||'--',
+      e.lastHydroTest||'--',
+      e.homolograma?e.homolograma.replace(/_/g,' ').toUpperCase():'--',
+      e.novedad||'',
+      e.result==='ok'?'OK':'NOV.',
     ]
   })
 
-  // Column index map (0-based):
-  // 0=N, 1=Serial, 2=Placa, 3=Ubicacion, 4=Cap,
-  // 5=Otros, 6=CO2, 7=Agua, 8=Otro,
-  // 9=Pintura, 10=Manija, 11=Manguera, 12=Manom, 13=Corneta, 14=Pasador, 15=Senaliz
-  // 16=UltTest, 17=Homolog, 18=Observaciones, 19=Estado
-
   autoTable(doc, {
     startY: tableY,
-    margin: { left: 8, right: 8 },
+    margin: {left:6, right:6},
     head: [
       [
-        { content:'N°',          rowSpan:2, styles:{valign:'middle',halign:'center'} },
-        { content:'Serial',      rowSpan:2, styles:{valign:'middle',halign:'center'} },
-        { content:'Placa',       rowSpan:2, styles:{valign:'middle',halign:'center'} },
-        { content:'Ubicacion',   rowSpan:2, styles:{valign:'middle',halign:'center'} },
-        { content:'Cap.',        rowSpan:2, styles:{valign:'middle',halign:'center'} },
-        { content:'TIPO',        colSpan:4, styles:{halign:'center'} },
-        { content:'REVISION ESTADO GENERAL', colSpan:9, styles:{halign:'center'} },
-        { content:'Ult. Test',   rowSpan:2, styles:{valign:'middle',halign:'center'} },
-        { content:'Homolog.',    rowSpan:2, styles:{valign:'middle',halign:'center'} },
-        { content:'Observaciones',rowSpan:2,styles:{valign:'middle',halign:'center'} },
-        { content:'Estado',      rowSpan:2, styles:{valign:'middle',halign:'center'} },
+        {content:'N°',          rowSpan:3, styles:{valign:'middle',halign:'center'}},
+        {content:'UBICACION',   rowSpan:3, styles:{valign:'middle',halign:'center'}},
+        {content:'TIPO',        colSpan:5, styles:{halign:'center'}},
+        {content:'CAPACIDAD',   rowSpan:3, styles:{valign:'middle',halign:'center'}},
+        {content:'REVISION ESTADO GENERAL', colSpan:9, styles:{halign:'center'}},
+        {content:'# PLACA\nINVENTARIO', rowSpan:3, styles:{valign:'middle',halign:'center'}},
+        {content:'FECHA ULT\nTEST',     rowSpan:3, styles:{valign:'middle',halign:'center'}},
+        {content:'HOMOLOGRAMA',          rowSpan:3, styles:{valign:'middle',halign:'center'}},
+        {content:'OBSERVACIONES',        rowSpan:3, styles:{valign:'middle',halign:'center'}},
+        {content:'ESTADO',               rowSpan:3, styles:{valign:'middle',halign:'center'}},
       ],
-      [ 'Otros','CO2','Agua','Otro', 'Pintura','Manija','Manguera','Manom.','Corneta','Pasador','Sello','Cilindro','Senaliz.' ],
+      [
+        'POS','80LKAFLAM','CO2','AGUA','OTRO',
+        'PINTURA','MANIJA DE\nTRANSPORTE','MANGUERA','PRESION','MANOMETRO','BOQUILLA','CORNETA','PASADOR','SEÑALIZ.',
+      ],
     ],
     body: rows,
     styles: {
-      fontSize: 6,
-      cellPadding: { top:1.5, bottom:1.5, left:1, right:1 },
-      lineColor: LGRAY, lineWidth: 0.2,
-      textColor: [30,30,30],
+      fontSize: 5.5,
+      cellPadding: {top:1, bottom:1, left:0.8, right:0.8},
+      lineColor: C.gray, lineWidth: 0.2,
+      textColor: C.black,
+      font: 'helvetica',
     },
     headStyles: {
-      fillColor: BLUE, textColor: WHITE,
-      fontStyle: 'bold', fontSize: 6,
-      cellPadding: { top:1.5, bottom:1.5, left:1, right:1 },
+      fillColor: C.blue,
+      textColor: C.white,
+      fontStyle: 'bold',
+      fontSize: 5.5,
+      cellPadding: {top:1, bottom:1, left:0.5, right:0.5},
+      halign: 'center',
+      valign: 'middle',
     },
     columnStyles: {
-      0:  { cellWidth:7,   halign:'center' },
-      1:  { cellWidth:18,  halign:'center', fontStyle:'bold' },
-      2:  { cellWidth:15,  halign:'center' },
-      3:  { cellWidth:36 },
-      4:  { cellWidth:10,  halign:'center' },
-      5:  { cellWidth:8,   halign:'center' },
-      6:  { cellWidth:8,   halign:'center' },
-      7:  { cellWidth:8,   halign:'center' },
-      8:  { cellWidth:8,   halign:'center' },
-      9:  { cellWidth:9,   halign:'center' },
-      10: { cellWidth:9,   halign:'center' },
-      11: { cellWidth:10,  halign:'center' },
-      12: { cellWidth:10,  halign:'center' },
-      13: { cellWidth:10,  halign:'center' },
-      14: { cellWidth:10,  halign:'center' },
-      15: { cellWidth:10,  halign:'center' },
-      16: { cellWidth:10,  halign:'center' },
-      17: { cellWidth:10,  halign:'center' },
-      18: { cellWidth:13,  halign:'center' },
-      19: { cellWidth:13,  halign:'center' },
-      20: { cellWidth:'auto' },
-      21: { cellWidth:12,  halign:'center' },
+      0:  {cellWidth:6,   halign:'center'},
+      1:  {cellWidth:36},
+      2:  {cellWidth:6,   halign:'center'},
+      3:  {cellWidth:8,   halign:'center'},
+      4:  {cellWidth:6,   halign:'center'},
+      5:  {cellWidth:7,   halign:'center'},
+      6:  {cellWidth:7,   halign:'center'},
+      7:  {cellWidth:10,  halign:'center'},
+      8:  {cellWidth:8,   halign:'center'},
+      9:  {cellWidth:8,   halign:'center'},
+      10: {cellWidth:9,   halign:'center'},
+      11: {cellWidth:8,   halign:'center'},
+      12: {cellWidth:9,   halign:'center'},
+      13: {cellWidth:9,   halign:'center'},
+      14: {cellWidth:9,   halign:'center'},
+      15: {cellWidth:9,   halign:'center'},
+      16: {cellWidth:9,   halign:'center'},
+      17: {cellWidth:13,  halign:'center'},
+      18: {cellWidth:12,  halign:'center'},
+      19: {cellWidth:14,  halign:'center'},
+      20: {cellWidth:'auto'},
+      21: {cellWidth:10,  halign:'center'},
     },
     didParseCell(data) {
-      if (data.section !== 'body') return
+      if (data.section!=='body') return
       const ci = data.column.index
-      const raw = data.cell.raw
-      // TIPO cols 5-8
-      if (ci >= 5 && ci <= 8 && raw === 'X') {
-        data.cell.styles.textColor = BLUE
-        data.cell.styles.fontStyle = 'bold'
-      }
-      // CHECK cols 9-17 (now 9 check items)
-      if (ci >= 9 && ci <= 17) {
-        if (raw === 'OK') data.cell.styles.textColor = GREEN
-        if (raw === 'F')  { data.cell.styles.textColor = RED; data.cell.styles.fontStyle = 'bold' }
-        if (raw === '--') data.cell.styles.textColor = GRAY2
+      const raw= data.cell.raw
+      // TIPO cols 2-6
+      if (ci>=2&&ci<=6&&raw==='X') { data.cell.styles.textColor=C.blue; data.cell.styles.fontStyle='bold' }
+      // CHECK cols 8-16
+      if (ci>=8&&ci<=16) {
+        if (raw==='OK') data.cell.styles.textColor=C.green
+        if (raw==='F')  { data.cell.styles.textColor=C.red; data.cell.styles.fontStyle='bold' }
+        if (raw==='--') data.cell.styles.textColor=C.muted
       }
       // Estado col 21
-      if (ci === 21) {
-        if (raw === 'OK')   data.cell.styles.textColor = GREEN
-        if (raw === 'NOV.') { data.cell.styles.textColor = RED; data.cell.styles.fontStyle = 'bold' }
+      if (ci===21) {
+        if (raw==='OK')   data.cell.styles.textColor=C.green
+        if (raw==='NOV.') { data.cell.styles.textColor=C.red; data.cell.styles.fontStyle='bold' }
       }
     },
-    alternateRowStyles: { fillColor: [248,250,252] },
+    alternateRowStyles: {fillColor:[248,250,252]},
     rowPageBreak: 'avoid',
   })
 
   const finalY = doc.lastAutoTable.finalY
 
-  // ── OMITIDOS ────────────────────────────────────────────
-  if (omitidos && omitidos.length > 0) {
-    const omY = finalY + 4
+  // ── OMITIDOS ─────────────────────────────────────────
+  if (omitidos&&omitidos.length>0) {
+    const omY = finalY+4
     doc.setFillColor(255,243,230)
-    doc.roundedRect(8, omY, pageW-16, 6 + omitidos.length*4.5, 1,1,'F')
-    doc.setFontSize(6.5); doc.setFont('helvetica','bold'); doc.setTextColor(...RED)
-    doc.text(`Extintores NO inspeccionados (${omitidos.length}):`, 13, omY+4.5)
-    doc.setFont('helvetica','normal'); doc.setTextColor(...DGRAY)
-    omitidos.forEach((o,i) => {
-      doc.text(`${i+1}. ${o.serial}  -  ${o.zone} > ${o.exactLocation}`, 18, omY+9+i*4.5)
-    })
+    doc.roundedRect(6, omY, W-12, 5+omitidos.length*4, 1,1,'F')
+    doc.setFontSize(6); doc.setFont('helvetica','bold'); doc.setTextColor(...C.red)
+    doc.text(`Extintores NO inspeccionados (${omitidos.length}):`, 12, omY+4)
+    doc.setFont('helvetica','normal'); doc.setTextColor(...C.dgray)
+    omitidos.forEach((o,i)=>{ doc.text(`${i+1}. ${o.serial} - ${o.zone} > ${o.exactLocation}`, 16, omY+8+i*4) })
   }
 
-  // ── SIGNATURES ──────────────────────────────────────────
-  const sigBaseY = finalY + (omitidos.length>0 ? 10+omitidos.length*4.5 : 6)
-  const sigY     = Math.min(sigBaseY, pageH-22)
-  const sigW     = (pageW-32)/3
+  // ── SIGNATURES — match official format ───────────────
+  const sigBaseY = finalY + (omitidos.length>0 ? 8+omitidos.length*4 : 4)
+  const sigY = Math.min(sigBaseY, H-32)
 
-  ;[
-    { label:'Firma Bombero Inspector', name:inspection.inspectorName },
-    { label:'Firma Jefe de Estacion',  name:'' },
-    { label:'Vo.Bo. Jefe de Operaciones', name:'' },
-  ].forEach((b,i) => {
-    const bx = 8 + i*(sigW+4)
-    doc.setDrawColor(...LGRAY)
-    doc.rect(bx, sigY, sigW, 14)
-    doc.line(bx, sigY+9, bx+sigW, sigY+9)
-    doc.setFont('helvetica','bold'); doc.setFontSize(6); doc.setTextColor(...DGRAY)
-    doc.text(b.label, bx+sigW/2, sigY+12.5, { align:'center' })
-    if (b.name) {
-      doc.setFont('helvetica','normal')
-      doc.text(b.name, bx+sigW/2, sigY+6, { align:'center' })
-    }
+  doc.setDrawColor(...C.gray)
+  doc.setFontSize(7)
+  doc.setFont('helvetica','normal')
+  doc.setTextColor(...C.black)
+
+  // Four signature lines matching official format
+  const lines = [
+    { label:'Fecha', value: inspection.date },
+    { label:'Bombero Inspector', value: inspection.inspectorName },
+    { label:'Oficial de Servicio', value: '' },
+    { label:'Lider de Estacion', value: '' },
+  ]
+
+  lines.forEach((l,i) => {
+    const y = sigY + i*7
+    doc.setFont('helvetica','bold')
+    doc.text(l.label, 10, y)
+    doc.setFont('helvetica','normal')
+    // underline
+    const labelW = doc.getStringUnitWidth(l.label)*7*0.352
+    const lineStart = 10+labelW+3
+    doc.line(lineStart, y+0.5, 140, y+0.5)
+    if (l.value) doc.text(l.value, lineStart+2, y-0.5)
   })
 
   // Footer
-  doc.setFontSize(5.5); doc.setTextColor(180,180,180); doc.setFont('helvetica','normal')
-  doc.text(
-    `ExtintorCheck ARFF · Sistema de Inspeccion de Extintores · UAEAC · ${new Date().toLocaleString('es-CO')}`,
-    pageW/2, pageH-5, { align:'center' }
-  )
+  doc.setFontSize(5)
+  doc.setTextColor(180,180,180)
+  doc.text(`REVIX - Sistema de Inspeccion de Extintores · UAEAC · Generado: ${new Date().toLocaleString('es-CO')}`, W/2, H-8, {align:'center'})
 
   return doc
 }
