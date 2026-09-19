@@ -11,21 +11,40 @@ function chk(val) {
 function tipoBucket(type) {
   if (!type) return {pos:'',sol:'',co2:'',agua:'',otro:''}
   const t = type.toUpperCase()
-  if (t.includes('CO2'))                                            return {pos:'',sol:'',co2:'X',agua:'',otro:''}
-  if (t.includes('AGUA'))                                           return {pos:'',sol:'',co2:'',agua:'X',otro:''}
-  if (t.includes('PQS') || t.includes('POLVO'))                    return {pos:'X',sol:'',co2:'',agua:'',otro:''}
+  if (t.includes('CO2'))                                         return {pos:'',sol:'',co2:'X',agua:'',otro:''}
+  if (t.includes('AGUA'))                                        return {pos:'',sol:'',co2:'',agua:'X',otro:''}
+  if (t.includes('PQS')||t.includes('POLVO'))                   return {pos:'X',sol:'',co2:'',agua:'',otro:''}
   if (t.includes('HALOTRON')||t.includes('SOLKAFLAM')||
-      t.includes('ESPUMA')||t.includes('AFFF'))                    return {pos:'',sol:'X',co2:'',agua:'',otro:''}
-  return                                                                   {pos:'',sol:'',co2:'',agua:'',otro:'X'}
+      t.includes('ESPUMA')||t.includes('AFFF'))                 return {pos:'',sol:'X',co2:'',agua:'',otro:''}
+  return                                                                {pos:'',sol:'',co2:'',agua:'',otro:'X'}
+}
+
+// Columns that need vertical text in header row 2
+// index = column index in the table (0-based)
+const VERTICAL_COLS = {
+  2:  'POS',
+  3:  ['SOLKA','FLAM'],
+  4:  'CO2',
+  5:  'AGUA',
+  6:  'OTRO',
+  7:  'CAPACIDAD',
+  8:  'PINTURA',
+  9:  ['MANIJA DE','TRANSPORTE'],
+  10: 'MANGUERA',
+  11: 'PRESION',
+  12: 'MANOMETRO',
+  13: 'BOQUILLA',
+  14: 'CORNETA',
+  15: 'PASADOR',
+  16: 'SEÑALIZACION',
 }
 
 export function generateInspectionPDF(inspection, extinguishers, airportName, omitidos=[]) {
   const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' })
-  const W = doc.internal.pageSize.getWidth()   // 297
-  const H = doc.internal.pageSize.getHeight()  // 210
+  const W = doc.internal.pageSize.getWidth()
+  const H = doc.internal.pageSize.getHeight()
 
   const BK=[0,0,0], WH=[255,255,255], LG=[210,210,210], MG=[180,180,180], DG=[80,80,80]
-  const GN=[22,163,74], RD=[220,38,38], BL=[0,61,124]
 
   // ── OUTER BORDER ─────────────────────────────────────
   doc.setDrawColor(...MG); doc.setLineWidth(0.4)
@@ -33,9 +52,9 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
 
   // ── HEADER BOX ───────────────────────────────────────
   doc.setLineWidth(0.3)
-  doc.rect(5, 5, W-10, 32)       // full header
-  doc.line(40, 5, 40, 37)        // vertical after logo cell
-  doc.line(W-45, 5, W-45, 15)   // left edge of FORMATO box
+  doc.rect(5, 5, W-10, 32)
+  doc.line(40, 5, 40, 37)
+  doc.line(W-45, 5, W-45, 15)
 
   // FORMATO box
   doc.setFillColor(...LG)
@@ -44,133 +63,172 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
   doc.setFont('helvetica','bold'); doc.setFontSize(8); doc.setTextColor(...BK)
   doc.text('FORMATO', W-25, 11.5, {align:'center'})
 
-  // Logo — centered in 35mm wide cell (x:5 to 40)
-  const logoW = 22, logoH = 22
-  const logoX = 5 + (35-logoW)/2   // = 11.5
-  const logoY = 7
+  // Logo centered in cell (x:5 to 40 = 35mm wide)
+  const logoW=22, logoH=22, logoX=5+(35-logoW)/2, logoY=7
   try {
-    doc.addImage(AEROCIVIL_LOGO, 'PNG', logoX, logoY, logoW, logoH)
-  } catch(e) {
-    doc.setFillColor(...BL); doc.circle(22.5, 18, 10, 'F')
-    doc.setTextColor(...WH); doc.setFontSize(14); doc.setFont('helvetica','bold')
-    doc.text('A', 22.5, 23, {align:'center'}); doc.setTextColor(...BK)
-  }
+    doc.addImage(AEROCIVIL_LOGO,'PNG',logoX,logoY,logoW,logoH)
+  } catch(e) {}
 
   // Title
   doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(...BK)
-  const cx = 40 + (W-10-40)/2
+  const cx = 40+(W-10-40)/2
   doc.text('REVISION TECNICA DE EXTINTORES', cx, 19, {align:'center'})
-
-  // Sub info
   doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...DG)
   doc.text(`Aeropuerto: ${airportName}`, cx, 26, {align:'center'})
   doc.text(`Inspector: ${inspection.inspectorName}   |   Fecha: ${inspection.date}   |   Hora inicio: ${inspection.startTime||'--'}   Hora fin: ${inspection.endTime||'--'}`, cx, 31, {align:'center'})
 
   // ── METADATA STRIP ───────────────────────────────────
-  const mY = 37
-  doc.setDrawColor(...MG); doc.rect(5, mY, W-10, 8)
-  const mw = (W-10)/3
-  doc.line(5+mw, mY, 5+mw, mY+8)
-  doc.line(5+mw*2, mY, 5+mw*2, mY+8)
+  const mY=37
+  doc.setDrawColor(...MG); doc.rect(5,mY,W-10,8)
+  const mw=(W-10)/3
+  doc.line(5+mw,mY,5+mw,mY+8); doc.line(5+mw*2,mY,5+mw*2,mY+8)
   doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...BK)
-  doc.text('Clave: MSER 5.0-12-006',          5+mw/2,    mY+5, {align:'center'})
-  doc.text('Version: 04',                      5+mw+mw/2, mY+5, {align:'center'})
-  doc.text('Fecha de aprobacion: 29/11/2022',  5+mw*2+mw/2, mY+5, {align:'center'})
+  doc.text('Clave: MSER 5.0-12-006',         5+mw/2,     mY+5, {align:'center'})
+  doc.text('Version: 04',                     5+mw+mw/2,  mY+5, {align:'center'})
+  doc.text('Fecha de aprobacion: 29/11/2022', 5+mw*2+mw/2,mY+5, {align:'center'})
 
   // ── TABLE ────────────────────────────────────────────
-  const tY = mY + 9
+  const tY = mY+9
 
-  const rows = extinguishers.map((e, i) => {
+  const rows = extinguishers.map((e,i) => {
     const tb  = tipoBucket(e.type)
-    const cap = e.capacity || ''
     return [
       i+1,
       `${e.zone||''}\n${e.exactLocation||''}`,
       tb.pos, tb.sol, tb.co2, tb.agua, tb.otro,
-      cap,
+      e.capacity||'',
       chk(e.checks?.paint),
       chk(e.checks?.handle),
       chk(e.checks?.hose),
       chk(e.checks?.pressure),
-      chk(e.checks?.pressure),
-      chk(e.checks?.nozzle),
-      chk(e.checks?.nozzle),
+      chk(e.checks?.pressure),   // manometro
+      chk(e.checks?.nozzle),     // boquilla
+      chk(e.checks?.nozzle),     // corneta
       chk(e.checks?.pasador),
       chk(e.checks?.signage),
       e.placa||'',
       e.lastHydroTest||'',
-      e.homolograma ? (e.homolograma==='sin_homolograma'?'S/HOMO':e.homolograma.replace(/_/g,' ').toUpperCase()) : '',
+      e.homolograma==='sin_homolograma'?'S/HOMO':e.homolograma?e.homolograma.replace(/_/g,' ').toUpperCase():'',
       e.novedad||'',
       inspection.inspectorName,
     ]
   })
 
+  const HEAD_H = 28 // height reserved for vertical text headers
+
   autoTable(doc, {
     startY: tY,
     margin: {left:5, right:5},
     head: [
-      // ROW 1 — group headers
+      // ROW 1 — group labels (horizontal)
       [
-        {content:'N°',      rowSpan:2, styles:{valign:'middle',halign:'center'}},
-        {content:'UBICACION',rowSpan:2,styles:{valign:'middle',halign:'center'}},
-        {content:'TIPO',    colSpan:5, styles:{halign:'center'}},
-        {content:'CAP.',    rowSpan:2, styles:{valign:'middle',halign:'center'}},
-        {content:'REVISION ESTADO GENERAL', colSpan:9, styles:{halign:'center'}},
-        {content:'# PLACA\nINVENT.',  rowSpan:2, styles:{valign:'middle',halign:'center'}},
-        {content:'FECHA\nULT TEST',   rowSpan:2, styles:{valign:'middle',halign:'center'}},
-        {content:'HOMOLOG.',           rowSpan:2, styles:{valign:'middle',halign:'center'}},
-        {content:'OBSERV.',            rowSpan:2, styles:{valign:'middle',halign:'center'}},
-        {content:'FIRMA BOMBERO\nQUE EFECTUO\nLA REVISION', rowSpan:2, styles:{valign:'middle',halign:'center'}},
+        {content:'N°',       rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold'}},
+        {content:'UBICACION',rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold'}},
+        {content:'TIPO',     colSpan:5, styles:{halign:'center',fontStyle:'bold'}},
+        // col 7 = CAPACIDAD — rowSpan:2, text drawn vertically in didDrawCell
+        {content:'',         rowSpan:2, styles:{valign:'middle',halign:'center'}},
+        {content:'REVISION ESTADO GENERAL', colSpan:9, styles:{halign:'center',fontStyle:'bold'}},
+        {content:'# PLACA\nINVENT.',  rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5.5}},
+        {content:'FECHA\nULT TEST',   rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5.5}},
+        {content:'HOMOLOG.',           rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5.5}},
+        {content:'OBSERV.',            rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5.5}},
+        {content:'FIRMA BOMBERO\nQUE EFECTUO\nLA REVISION', rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5}},
       ],
-      // ROW 2 — sub-headers
+      // ROW 2 — vertical column names (content empty — drawn in didDrawCell)
       [
-        'POS','SOLKA\nFLAM','CO2','AGUA','OTRO',
-        'PINTURA','MANIJA\nTRANSP.','MANGUERA','PRESION','MANOMETRO','BOQUILLA','CORNETA','PASADOR','SEÑALIZ.',
+        {content:'', styles:{minCellHeight:HEAD_H}}, // POS
+        {content:'', styles:{minCellHeight:HEAD_H}}, // SOLKAFLAM
+        {content:'', styles:{minCellHeight:HEAD_H}}, // CO2
+        {content:'', styles:{minCellHeight:HEAD_H}}, // AGUA
+        {content:'', styles:{minCellHeight:HEAD_H}}, // OTRO
+        // col 7 CAPACIDAD handled by rowSpan above
+        {content:'', styles:{minCellHeight:HEAD_H}}, // PINTURA
+        {content:'', styles:{minCellHeight:HEAD_H}}, // MANIJA DE TRANSPORTE
+        {content:'', styles:{minCellHeight:HEAD_H}}, // MANGUERA
+        {content:'', styles:{minCellHeight:HEAD_H}}, // PRESION
+        {content:'', styles:{minCellHeight:HEAD_H}}, // MANOMETRO
+        {content:'', styles:{minCellHeight:HEAD_H}}, // BOQUILLA
+        {content:'', styles:{minCellHeight:HEAD_H}}, // CORNETA
+        {content:'', styles:{minCellHeight:HEAD_H}}, // PASADOR
+        {content:'', styles:{minCellHeight:HEAD_H}}, // SEÑALIZACION
       ],
     ],
     body: rows,
     styles: {
-      fontSize: 6,
-      cellPadding: {top:1.2, bottom:1.2, left:0.8, right:0.8},
-      lineColor: MG, lineWidth: 0.2,
-      textColor: BK, font:'helvetica',
+      fontSize:6, cellPadding:{top:1.2,bottom:1.2,left:0.8,right:0.8},
+      lineColor:MG, lineWidth:0.2, textColor:BK, font:'helvetica',
       halign:'center', valign:'middle',
     },
     headStyles: {
-      fillColor: WH, textColor: BK,
-      fontStyle:'bold', fontSize:5.5,
-      lineColor: MG, lineWidth:0.2,
-      halign:'center', valign:'middle',
+      fillColor:WH, textColor:BK, fontStyle:'bold', fontSize:6,
+      lineColor:MG, lineWidth:0.2, halign:'center', valign:'middle',
     },
     columnStyles: {
       0:  {cellWidth:6},
       1:  {cellWidth:34, halign:'left'},
-      2:  {cellWidth:6},
-      3:  {cellWidth:10},
-      4:  {cellWidth:6},
-      5:  {cellWidth:7},
-      6:  {cellWidth:7},
-      7:  {cellWidth:10},
-      8:  {cellWidth:8},
-      9:  {cellWidth:9},
-      10: {cellWidth:8},
-      11: {cellWidth:8},
-      12: {cellWidth:9},
-      13: {cellWidth:8},
-      14: {cellWidth:8},
-      15: {cellWidth:8},
-      16: {cellWidth:8},
-      17: {cellWidth:11},
-      18: {cellWidth:12},
-      19: {cellWidth:10},
-      20: {cellWidth:'auto'},
-      21: {cellWidth:16},
+      2:  {cellWidth:7},   // POS
+      3:  {cellWidth:7},   // SOLKAFLAM
+      4:  {cellWidth:7},   // CO2
+      5:  {cellWidth:7},   // AGUA
+      6:  {cellWidth:7},   // OTRO
+      7:  {cellWidth:8},   // CAPACIDAD
+      8:  {cellWidth:7},   // PINTURA
+      9:  {cellWidth:8},   // MANIJA DE TRANSPORTE
+      10: {cellWidth:8},   // MANGUERA
+      11: {cellWidth:7},   // PRESION
+      12: {cellWidth:9},   // MANOMETRO
+      13: {cellWidth:8},   // BOQUILLA
+      14: {cellWidth:8},   // CORNETA
+      15: {cellWidth:8},   // PASADOR
+      16: {cellWidth:10},  // SEÑALIZACION
+      17: {cellWidth:11},  // # PLACA
+      18: {cellWidth:11},  // FECHA ULT TEST
+      19: {cellWidth:10},  // HOMOLOG
+      20: {cellWidth:'auto'}, // OBSERV
+      21: {cellWidth:16},  // FIRMA
     },
+
+    didDrawCell(data) {
+      // Only act on header row 2 (rowIndex 1) for vertical columns
+      if (data.section !== 'head') return
+      if (data.row.index !== 1) return
+
+      const ci = data.column.index
+      const label = VERTICAL_COLS[ci]
+      if (!label) return
+
+      const { x, y, width, height } = data.cell
+
+      // Paint white to erase any autotable text
+      doc.setFillColor(...WH)
+      doc.rect(x+0.1, y+0.1, width-0.2, height-0.2, 'F')
+
+      // Draw vertical text — rotated 90° (bottom to top, reading upward)
+      doc.setFont('helvetica','bold')
+      doc.setFontSize(5.5)
+      doc.setTextColor(...BK)
+
+      const textX = x + width/2     // center horizontally
+      const textY = y + height - 2  // start near bottom
+
+      if (Array.isArray(label)) {
+        // Multi-line vertical text (e.g. MANIJA DE / TRANSPORTE)
+        // Draw second line first (lower), then first line above it
+        const lineGap = 5 // mm between lines
+        doc.text(label[1], textX, textY,           {angle:90, align:'left'})
+        doc.text(label[0], textX, textY - lineGap, {angle:90, align:'left'})
+      } else {
+        doc.text(label, textX, textY, {angle:90, align:'left'})
+      }
+    },
+
     didParseCell(data) {
       if (data.section!=='body') return
-      const ci = data.column.index
-      if (ci>=2&&ci<=6&&data.cell.raw==='X') data.cell.styles.fontStyle='bold'
+      if (data.column.index>=2&&data.column.index<=6&&data.cell.raw==='X') {
+        data.cell.styles.fontStyle='bold'
+      }
     },
+
     alternateRowStyles: {fillColor:[248,248,248]},
     rowPageBreak:'avoid',
   })
