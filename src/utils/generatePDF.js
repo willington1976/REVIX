@@ -66,6 +66,9 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
 
   // Logo centered in cell (x:5 to 40 = 35mm wide)
   const logoW=26, logoH=26, logoX=5+(35-logoW)/2, logoY=6
+  // White background before logo to prevent transparent PNG rendering gray
+  doc.setFillColor(255,255,255)
+  doc.rect(logoX, logoY, logoW, logoH, 'F')
   try {
     doc.addImage(AEROCIVIL_LOGO,'PNG',logoX,logoY,logoW,logoH)
   } catch(e) {}
