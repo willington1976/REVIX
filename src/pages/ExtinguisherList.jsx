@@ -9,35 +9,34 @@ function calcDiff(date) {
   if (!date) return null
   return (new Date(date) - new Date()) / (1000*60*60*24)
 }
-
 function hydroExpiry(lastHydroTest) {
   if (!lastHydroTest) return null
   const d = new Date(lastHydroTest)
-  d.setFullYear(d.getFullYear() + 5)
+  d.setFullYear(d.getFullYear()+5)
   return d.toISOString().split('T')[0]
 }
-
 function statusBadge(ext) {
   const agentDiff = calcDiff(ext.expiryDate)
   const hydroDate = hydroExpiry(ext.lastHydroTest)
   const hydroDiff = calcDiff(hydroDate)
-
-  // Collect both diffs — pick worst state
   const diffs = []
-  if (agentDiff !== null) diffs.push({ diff: agentDiff, label: 'Agente' })
-  if (hydroDiff !== null) diffs.push({ diff: hydroDiff, label: 'Hidrost.' })
-
-  if (diffs.length === 0) return { label:'SIN FECHA', color:'#475569', bg:'#1E293B', detail:'' }
-
-  // Sort by worst (lowest diff first)
-  diffs.sort((a,b) => a.diff - b.diff)
-  const worst = diffs[0]
-
-  if (worst.diff < 0)  return { label:'VENCIDO',   color:'#EF4444', bg:'#450A0A', detail: worst.label }
-  if (worst.diff < 30) return { label:'< 30 DÍAS', color:'#F59E0B', bg:'#431407', detail: worst.label }
-  if (worst.diff < 60) return { label:'< 60 DÍAS', color:'#FBBF24', bg:'#1C1A07', detail: worst.label }
-  return                      { label:'AL DÍA',    color:'#22C55E', bg:'#052E16', detail: '' }
+  if (agentDiff!==null) diffs.push({diff:agentDiff, label:'Agente'})
+  if (hydroDiff!==null) diffs.push({diff:hydroDiff, label:'Hidrost.'})
+  if (diffs.length===0) return {label:'SIN FECHA', color:'#475569', bg:'#1E293B', detail:''}
+  diffs.sort((a,b)=>a.diff-b.diff)
+  const w = diffs[0]
+  if (w.diff<0)  return {label:'VENCIDO',   color:'#FCA5A5', bg:'#450A0A', detail:w.label}
+  if (w.diff<30) return {label:'< 30 DÍAS', color:'#FCD34D', bg:'#3B2000', detail:w.label}
+  if (w.diff<60) return {label:'< 60 DÍAS', color:'#FCD34D', bg:'#1C1A07', detail:w.label}
+  return                {label:'AL DÍA',    color:'#6EE7B7', bg:'#022C22', detail:''}
 }
+
+const FILTER_TABS = [
+  {v:'all',      l:'Todos'},
+  {v:'ok',       l:'Al día'},
+  {v:'warning',  l:'Por vencer'},
+  {v:'expired',  l:'Vencidos'},
+]
 
 export default function ExtinguisherList() {
   const { profile } = useAuth()
@@ -46,120 +45,154 @@ export default function ExtinguisherList() {
   const [extinguishers, setExtinguishers] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filter, setFilter] = useState('all') // all | ok | warning | expired
+  const [filter, setFilter] = useState('all')
 
   useEffect(() => {
     getDocs(query(collection(db,'airports',profile.airportCode,'extinguishers'),orderBy('createdAt','desc')))
-      .then(snap => { setExtinguishers(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false) })
+      .then(snap=>{setExtinguishers(snap.docs.map(d=>({id:d.id,...d.data()}))); setLoading(false)})
   }, [])
 
   const filtered = extinguishers.filter(e => {
-    const matchSearch = e.serial?.toLowerCase().includes(search.toLowerCase()) ||
-      e.zone?.toLowerCase().includes(search.toLowerCase()) ||
-      e.type?.toLowerCase().includes(search.toLowerCase())
-    if (!matchSearch) return false
-    if (filter === 'all') return true
-    const badge = statusBadge(e)
-    if (filter === 'expired') return badge.label === 'VENCIDO'
-    if (filter === 'warning') return badge.label === '< 30 DÍAS' || badge.label === '< 60 DÍAS'
-    if (filter === 'ok') return badge.label === 'AL DÍA' || badge.label === 'SIN FECHA'
+    const q = search.toLowerCase()
+    const match = e.serial?.toLowerCase().includes(q)||e.zone?.toLowerCase().includes(q)||e.type?.toLowerCase().includes(q)
+    if (!match) return false
+    if (filter==='all') return true
+    const b = statusBadge(e)
+    if (filter==='expired') return b.label==='VENCIDO'
+    if (filter==='warning') return b.label==='< 30 DÍAS'||b.label==='< 60 DÍAS'
+    if (filter==='ok')      return b.label==='AL DÍA'||b.label==='SIN FECHA'
     return true
   })
 
-  const expired = extinguishers.filter(e => statusBadge(e).label === 'VENCIDO').length
+  const expired = extinguishers.filter(e=>statusBadge(e).label==='VENCIDO').length
+  const warning = extinguishers.filter(e=>['< 30 DÍAS','< 60 DÍAS'].includes(statusBadge(e).label)).length
 
   return (
-    <div className="min-h-screen bg-[#0F172A] pb-16">
-      <div className="h-0.5 w-full" style={{background:'linear-gradient(90deg,#2563EB,#16A34A)'}}/>
-      <TopBar title="Inventario de Extintores" back/>
+    <div style={{minHeight:'100vh', background:'#0A0F1E', paddingBottom:80}}>
+      <TopBar title="Inventario de Extintores" back
+        right={!isInspector && (
+          <button onClick={()=>navigate('/extinguishers/new')}
+            style={{width:36,height:36,borderRadius:8,border:'none',background:'#15803D',
+                    color:'white',fontSize:20,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>
+            +
+          </button>
+        )}
+      />
 
       {/* Summary strip */}
-      <div className="px-4 py-3 flex items-center gap-3">
-        {isInspector && (
-          <span className="font-mono text-[10px] px-3 py-1.5 rounded-lg border flex-shrink-0"
-                style={{color:'#64748B', borderColor:'rgba(255,255,255,0.1)', background:'#0F172A'}}>
-            SOLO LECTURA
-          </span>
-        )}
-        <div className="card-highlight flex-1 rounded-xl border border-white/8 px-4 py-3 flex items-center justify-between"
-             style={{background:'#1E293B'}}>
-          <div>
-            <p className="font-mono text-2xl font-bold text-white">{extinguishers.length}</p>
-            <p className="font-mono text-[10px] text-slate-500 uppercase tracking-wider">Registrados</p>
-          </div>
-          {expired > 0 && (
-            <div className="text-right">
-              <p className="font-mono text-2xl font-bold text-red-500">{expired}</p>
-              <p className="font-mono text-[10px] text-red-700 uppercase tracking-wider">Vencidos</p>
-            </div>
-          )}
+      <div style={{padding:'12px 16px', display:'flex', gap:8}}>
+        <div style={{flex:1, background:'#111827', border:'1px solid rgba(255,255,255,0.06)',
+                     borderRadius:10, padding:'10px 14px'}}>
+          <p style={{fontFamily:'JetBrains Mono,monospace', fontSize:22, fontWeight:700,
+                     color:'#F1F5F9', margin:0}}>{extinguishers.length}</p>
+          <p style={{fontSize:11, color:'#475569', margin:'2px 0 0', textTransform:'uppercase', letterSpacing:'0.06em'}}>Registrados</p>
         </div>
-        <button onClick={() => navigate('/extinguishers/new')}
-          className="tap-target flex items-center justify-center w-14 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-2xl transition-colors flex-shrink-0"
-          style={{height:64}}>
-          +
-        </button>
+        {expired>0 && (
+          <div style={{flex:1, background:'#450A0A', border:'1px solid rgba(220,38,38,0.2)',
+                       borderRadius:10, padding:'10px 14px'}}>
+            <p style={{fontFamily:'JetBrains Mono,monospace', fontSize:22, fontWeight:700,
+                       color:'#FCA5A5', margin:0}}>{expired}</p>
+            <p style={{fontSize:11, color:'#7F1D1D', margin:'2px 0 0', textTransform:'uppercase', letterSpacing:'0.06em'}}>Vencidos</p>
+          </div>
+        )}
+        {warning>0 && (
+          <div style={{flex:1, background:'#3B2000', border:'1px solid rgba(180,83,9,0.2)',
+                       borderRadius:10, padding:'10px 14px'}}>
+            <p style={{fontFamily:'JetBrains Mono,monospace', fontSize:22, fontWeight:700,
+                       color:'#FCD34D', margin:0}}>{warning}</p>
+            <p style={{fontSize:11, color:'#78350F', margin:'2px 0 0', textTransform:'uppercase', letterSpacing:'0.06em'}}>Por vencer</p>
+          </div>
+        )}
+        {isInspector && (
+          <div style={{display:'flex', alignItems:'center', padding:'0 12px',
+                       background:'#0F172A', border:'1px solid rgba(255,255,255,0.06)',
+                       borderRadius:10}}>
+            <span style={{fontSize:11, color:'#334155', fontFamily:'JetBrains Mono,monospace',
+                           textTransform:'uppercase', letterSpacing:'0.06em', whiteSpace:'nowrap'}}>
+              Lectura
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Search */}
-      <div className="px-4 mb-3">
-        <input value={search} onChange={e => setSearch(e.target.value)}
-          placeholder="Buscar serial, zona, tipo..."
-          className="w-full bg-[#1E293B] border border-white/10 text-white rounded-xl px-4 text-sm focus:outline-none focus:border-[#2563EB] font-mono placeholder-slate-600"
-          style={{minHeight:48}}/>
+      <div style={{padding:'0 16px 8px'}}>
+        <div style={{position:'relative'}}>
+          <svg style={{position:'absolute', left:14, top:'50%', transform:'translateY(-50%)', color:'#334155'}}
+               width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+          </svg>
+          <input value={search} onChange={e=>setSearch(e.target.value)}
+            placeholder="Buscar serial, zona, tipo..."
+            style={{width:'100%', background:'#111827', border:'1px solid rgba(255,255,255,0.06)',
+                    color:'#F1F5F9', borderRadius:10, padding:'0 16px 0 40px', fontSize:14,
+                    minHeight:44, outline:'none', fontFamily:'Inter,sans-serif', boxSizing:'border-box'}}/>
+        </div>
       </div>
 
       {/* Filter tabs */}
-      <div className="px-4 flex gap-2 mb-4 overflow-x-auto pb-1">
-        {[['all','Todos'],['ok','Al día'],['warning','Por vencer'],['expired','Vencidos']].map(([v,l]) => (
-          <button key={v} onClick={() => setFilter(v)}
-            className="flex-shrink-0 font-mono text-xs px-3 rounded-full border transition-colors"
-            style={{
-              minHeight:32,
-              background: filter===v ? '#2563EB' : '#1E293B',
-              borderColor: filter===v ? '#2563EB' : 'rgba(255,255,255,0.1)',
-              color: filter===v ? 'white' : '#64748B'
-            }}>
-            {l}
+      <div style={{padding:'0 16px 12px', display:'flex', gap:6, overflowX:'auto'}}>
+        {FILTER_TABS.map(t=>(
+          <button key={t.v} onClick={()=>setFilter(t.v)}
+            style={{flexShrink:0, padding:'6px 14px', borderRadius:20, fontSize:12, fontWeight:500,
+                    cursor:'pointer', fontFamily:'Inter,sans-serif', transition:'all .15s',
+                    background: filter===t.v?'#1D6FE8':'rgba(255,255,255,0.04)',
+                    border: `1px solid ${filter===t.v?'#1D6FE8':'rgba(255,255,255,0.06)'}`,
+                    color: filter===t.v?'white':'#64748B'}}>
+            {t.l}
           </button>
         ))}
       </div>
 
       {/* List */}
       {loading ? (
-        <div className="px-4 space-y-3">
-          {[1,2,3].map(i => <div key={i} className="skeleton h-20 rounded-xl"/>)}
+        <div style={{padding:'0 16px', display:'flex', flexDirection:'column', gap:6}}>
+          {[1,2,3,4].map(i=><div key={i} className="skeleton" style={{height:80,borderRadius:12}}/>)}
         </div>
       ) : (
-        <div className="px-4 space-y-2 pb-4">
+        <div style={{padding:'0 16px', display:'flex', flexDirection:'column', gap:4}}>
           {filtered.map(ext => {
             const badge = statusBadge(ext)
+            const accentColor = badge.label==='AL DÍA'?'#15803D':badge.label==='VENCIDO'?'#DC2626':'#B45309'
             return (
-              <div key={ext.id} onClick={() => !isInspector && navigate(`/extinguishers/${ext.id}`)} className="card-highlight rounded-xl border border-white/8 p-4 cursor-pointer active:scale-[0.98] transition-transform"
-                   style={{background:'#1E293B', borderLeftColor:badge.color, borderLeftWidth:3}}>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex-1 min-w-0">
-                    <p className="font-mono text-xl font-bold text-white tracking-tight leading-none">{ext.serial}</p>
-                    <p className="text-slate-400 text-xs uppercase tracking-widest mt-1">{ext.zone}</p>
-                    <p className="text-slate-500 text-xs mt-0.5 truncate">{ext.exactLocation}</p>
-                    <p className="font-mono text-xs text-slate-600 mt-1">{ext.type} · {ext.capacity} {ext.capacityUnit}</p>
+              <div key={ext.id}
+                onClick={()=>!isInspector&&navigate(`/extinguishers/${ext.id}`)}
+                style={{background:'#111827', border:'1px solid rgba(255,255,255,0.06)',
+                        borderRadius:12, borderLeft:`3px solid ${accentColor}`,
+                        padding:'14px 16px', cursor:isInspector?'default':'pointer',
+                        display:'flex', alignItems:'flex-start', gap:12}}>
+                <div style={{flex:1, minWidth:0}}>
+                  <div style={{display:'flex', alignItems:'baseline', gap:8, marginBottom:3}}>
+                    <span style={{fontFamily:'JetBrains Mono,monospace', fontSize:18, fontWeight:700,
+                                  color:'#F1F5F9', letterSpacing:'-0.01em'}}>{ext.serial}</span>
+                    {ext.placa && <span style={{fontSize:11, color:'#334155',
+                                                fontFamily:'JetBrains Mono,monospace'}}>#{ext.placa}</span>}
                   </div>
-                  <div className="text-right flex-shrink-0">
-                    <span className="font-mono text-[10px] font-bold px-2 py-1 rounded"
-                          style={{background:badge.bg, color:badge.color}}>
-                      {badge.label}
-                    </span>
-                    {ext.expiryDate && (
-                      <p className="font-mono text-[10px] text-slate-600 mt-1">{ext.expiryDate}</p>
-                    )}
-                  </div>
+                  <p style={{fontSize:11, color:'#64748B', margin:'0 0 2px',
+                             textTransform:'uppercase', letterSpacing:'0.06em'}}>{ext.zone}</p>
+                  <p style={{fontSize:12, color:'#475569', margin:0,
+                             overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>{ext.exactLocation}</p>
+                  <p style={{fontSize:11, color:'#334155', margin:'4px 0 0',
+                             fontFamily:'JetBrains Mono,monospace'}}>{ext.type?.split(' ')[0]} · {ext.capacity} {ext.capacityUnit}</p>
+                </div>
+                <div style={{textAlign:'right', flexShrink:0}}>
+                  <span style={{fontSize:10, fontWeight:700, padding:'3px 8px', borderRadius:5,
+                                background:badge.bg, color:badge.color, display:'block',
+                                fontFamily:'JetBrains Mono,monospace'}}>
+                    {badge.label}
+                  </span>
+                  {badge.detail && <p style={{fontSize:10, color:badge.color, margin:'3px 0 0',
+                                              fontFamily:'JetBrains Mono,monospace'}}>{badge.detail}</p>}
+                  {ext.expiryDate && <p style={{fontSize:10, color:'#334155', margin:'3px 0 0',
+                                                fontFamily:'JetBrains Mono,monospace'}}>{ext.expiryDate}</p>}
                 </div>
               </div>
             )
           })}
-          {filtered.length === 0 && (
-            <div className="text-center py-16">
-              <p className="font-mono text-slate-600 text-sm">0 RESULTADOS</p>
+          {filtered.length===0 && (
+            <div style={{textAlign:'center', padding:'48px 0'}}>
+              <p style={{fontSize:14, color:'#334155', margin:0}}>Sin resultados</p>
+              <p style={{fontSize:12, color:'#1E293B', margin:'6px 0 0'}}>Intenta con otro término</p>
             </div>
           )}
         </div>

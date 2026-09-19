@@ -21,7 +21,7 @@ const CHECKS = [
   { key:'signage',  label:'Señalización visible y legible', icon:'🚨' },
 ]
 const defaultChecks = () => ({ pressure:null,pasador:null,seal:null,paint:null,handle:null,hose:null,nozzle:null,cylinder:null,signage:null })
-const BG='#0F172A', CARD='#1E293B', BLUE='#2563EB', GREEN='#16A34A', RED='#DC2626', AMBER='#D97706'
+const BG='#0A0F1E', CARD='#111827', BLUE='#1D6FE8', GREEN='#15803D', RED='#DC2626', AMBER='#B45309'
 
 export default function InspectSession() {
   const { profile } = useAuth()
@@ -455,13 +455,10 @@ export default function InspectSession() {
             CHECKS.forEach(c => { allOk[c.key] = true })
             setChecks(allOk)
           }}
-          style={{
-            width:'100%', minHeight:52, borderRadius:16, border:'none',
-            background:'linear-gradient(135deg,#16A34A,#15803D)',
-            color:'white', fontWeight:700, fontSize:15, cursor:'pointer',
-            letterSpacing:'0.02em'
-          }}>
-          ✓ Todo OK — Marcar todos como aprobados
+          style={{width:'100%',minHeight:52,borderRadius:10,border:'1px solid rgba(21,128,61,0.4)',
+                  background:'rgba(21,128,61,0.08)',color:'#4ADE80',fontWeight:600,fontSize:14,
+                  cursor:'pointer',fontFamily:'Inter,sans-serif',letterSpacing:'0.01em'}}>
+          ✓ Marcar todo como OK
         </button>
 
         {CHECKS.map(item => {

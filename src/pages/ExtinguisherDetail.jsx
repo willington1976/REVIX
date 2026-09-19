@@ -13,7 +13,7 @@ const TYPES = ['PQS (Polvo Químico Seco)','CO2','Agua','Espuma AFFF','Halotron'
 const ZONES = ['Terminal Nacional','Terminal Internacional','Sala de Pasajeros','Pasillos',
   'Servicios Médicos','Torre de Control','Área de Rampa','Hangares','Bomberos/BAE','Otro']
 
-const inputCls = "w-full bg-[#0F172A] border border-white/10 text-white rounded-xl px-4 text-sm focus:outline-none focus:border-[#2563EB] transition-colors font-mono"
+const inputCls = "w-full bg-[#0A0F1E] border border-white/8 text-white rounded-xl px-4 text-sm focus:outline-none focus:border-[#1D6FE8] transition-colors font-mono"
 
 function Field({ label, children }) {
   return (
@@ -182,7 +182,7 @@ export default function ExtinguisherDetail() {
       {/* Identity strip */}
       <div className="px-4 pt-4 pb-3">
         <div className="card-highlight rounded-2xl border border-white/8 p-4"
-             style={{background:'#1E293B', borderLeftColor: badge.color, borderLeftWidth: 4}}>
+             style={{background:'#111827', borderLeftColor: badge.color, borderLeftWidth: 3}}>
           <div className="flex items-start justify-between">
             <div>
               <p className="font-mono text-3xl font-bold text-white tracking-tight">{ext.serial}</p>
@@ -205,8 +205,8 @@ export default function ExtinguisherDetail() {
             className="flex-1 font-mono text-xs rounded-xl border transition-colors"
             style={{
               minHeight: 40,
-              background: tab===v ? '#2563EB' : '#1E293B',
-              borderColor: tab===v ? '#2563EB' : 'rgba(255,255,255,0.08)',
+              background: tab===v ? '#1D6FE8' : '#111827',
+              borderColor: tab===v ? '#1D6FE8' : 'rgba(255,255,255,0.06)',
               color: tab===v ? 'white' : '#64748B'
             }}>
             {l}
@@ -324,13 +324,12 @@ export default function ExtinguisherDetail() {
                 </div>
               ))}
               <button onClick={() => setEditing(true)}
-                className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-xl text-sm mt-4"
+                className="w-full text-white font-semibold rounded-xl text-sm mt-4" style={{background:'#1D6FE8'}}
                 style={{minHeight:48}}>
                 ✏️ Editar datos
               </button>
               <button onClick={() => { setShowDeleteModal(true); setDeleteConfirm('') }}
-                className="w-full font-semibold rounded-xl text-sm mt-2 border"
-                style={{minHeight:48, color:'#EF4444', borderColor:'#EF444433', background:'#450A0A22'}}>
+                style={{width:'100%',minHeight:48,borderRadius:10,border:'1px solid rgba(220,38,38,0.2)',background:'rgba(220,38,38,0.04)',color:'#F87171',fontWeight:500,fontSize:14,cursor:'pointer',marginTop:8,fontFamily:'Inter,sans-serif'}}>
                 Dar de baja / Eliminar extintor
               </button>
             </>
@@ -341,7 +340,7 @@ export default function ExtinguisherDetail() {
       {/* ── TAB: QR ── */}
       {tab === 'qr' && (
         <div className="px-4 text-center space-y-4">
-          <div className="card-highlight rounded-2xl border border-white/8 p-6" style={{background:'#1E293B'}}>
+          <div className="card-highlight rounded-2xl border border-white/8 p-6" style={{background:'#111827'}}>
             <p className="font-mono text-[10px] text-slate-500 uppercase tracking-widest mb-4">
               QR original · permanente
             </p>
@@ -357,8 +356,7 @@ export default function ExtinguisherDetail() {
             </p>
           </div>
           <button onClick={downloadQR}
-            className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold rounded-xl text-sm"
-            style={{minHeight:52}}>
+            style={{width:'100%',minHeight:52,borderRadius:10,border:'none',background:'#1D6FE8',color:'white',fontWeight:600,fontSize:14,cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
             Descargar QR (PDF) — Reimprimir
           </button>
         </div>
@@ -459,7 +457,7 @@ export default function ExtinguisherDetail() {
               const GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706'
               return (
                 <div key={i} className="card-highlight rounded-xl border border-white/8 p-4"
-                     style={{background:'#1E293B', borderLeftWidth:3, borderLeftColor: h.item.result==='ok' ? GREEN : RED}}>
+                     style={{background:'#111827', borderLeftWidth:3, borderLeftColor: h.item.result==='ok' ? GREEN : RED}}>
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="font-mono text-sm font-bold text-white">{h.date}</p>

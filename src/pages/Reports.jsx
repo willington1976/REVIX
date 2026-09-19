@@ -6,7 +6,7 @@ import { useNavigate } from 'react-router-dom'
 import { generateInspectionPDF } from '../utils/generatePDF'
 import { TopBar, AppFooter } from '../components/AppShell'
 
-const MONTH_NAMES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
+const MONTHS = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre']
 
 export default function Reports() {
   const { profile } = useAuth()
@@ -18,226 +18,191 @@ export default function Reports() {
   useEffect(() => {
     getDocs(query(collection(db,'airports',profile.airportCode,'reports'),orderBy('createdAt','desc')))
       .then(snap => {
-        // Sort by createdAt seconds descending — most recent first always
-        const data = snap.docs
-          .map(d=>({id:d.id,...d.data()}))
-          .sort((a,b) => {
-            const ta = a.createdAt?.seconds || 0
-            const tb = b.createdAt?.seconds || 0
-            return tb - ta
-          })
+        const data = snap.docs.map(d=>({id:d.id,...d.data()}))
+          .sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0))
         setReports(data)
-
-        // Auto-collapse all years except current
         const currentYear = new Date().getFullYear().toString()
-        const years = [...new Set(data.map(r => r.date?.slice(0,4)).filter(Boolean))]
-        const initial = {}
-        years.forEach(y => { if (y !== currentYear) initial[y] = true })
-        setCollapsedYears(initial)
-
+        const years = [...new Set(data.map(r=>r.date?.slice(0,4)).filter(Boolean))]
+        const init = {}
+        years.forEach(y=>{ if(y!==currentYear) init[y]=true })
+        setCollapsedYears(init)
         setLoading(false)
       })
   }, [])
 
   const handleOpen = async (r) => {
     try {
-      const items = (r.items || []).map(item => ({
+      const items = (r.items||[]).map(item=>({
         ...item,
         checks: item.checks ? {
-          pressure: item.checks.pressure === true,
-          pasador:  item.checks.pasador  === true,
-          seal:     item.checks.seal     === true,
-          paint:    item.checks.paint    === true,
-          handle:   item.checks.handle   === true,
-          hose:     item.checks.hose     === true,
-          nozzle:   item.checks.nozzle   === true,
-          cylinder: item.checks.cylinder === true,
-          signage:  item.checks.signage  === true,
+          pressure:item.checks.pressure===true, pasador:item.checks.pasador===true,
+          seal:item.checks.seal===true, paint:item.checks.paint===true,
+          handle:item.checks.handle===true, hose:item.checks.hose===true,
+          nozzle:item.checks.nozzle===true, cylinder:item.checks.cylinder===true,
+          signage:item.checks.signage===true,
         } : {}
       }))
       const pdf = generateInspectionPDF(r, items, r.airportName||r.airportCode, r.omitidos||[])
       const fileName = `REVIX_Inspeccion_${r.airportCode}_${r.date}.pdf`
       const blob = pdf.output('blob')
-      const file = new File([blob], fileName, { type: 'application/pdf' })
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ files: [file], title: `Inspección REVIX ${r.airportCode} ${r.date}` })
-      } else {
-        pdf.save(fileName)
-      }
-    } catch(err) {
-      alert('Error: ' + err.message)
-    }
+      const file = new File([blob], fileName, {type:'application/pdf'})
+      if (navigator.canShare && navigator.canShare({files:[file]})) {
+        await navigator.share({files:[file], title:`Inspección REVIX ${r.airportCode} ${r.date}`})
+      } else { pdf.save(fileName) }
+    } catch(err) { alert('Error: '+err.message) }
   }
 
-  const toggleYear = (year) => {
-    setCollapsedYears(p => ({ ...p, [year]: !p[year] }))
-  }
+  const toggleYear = (y) => setCollapsedYears(p=>({...p,[y]:!p[y]}))
+  const monthLabel = (key) => { const [,m]=key.split('-'); return MONTHS[parseInt(m,10)-1]||key }
 
-  // Group: year → month → reports
-  const byYear = reports.reduce((acc, r) => {
-    const year  = r.date?.slice(0,4) || 'Sin fecha'
-    const month = r.date?.slice(0,7) || 'Sin fecha'
-    if (!acc[year]) acc[year] = {}
-    if (!acc[year][month]) acc[year][month] = []
+  const byYear = reports.reduce((acc,r)=>{
+    const year=r.date?.slice(0,4)||'Sin fecha'
+    const month=r.date?.slice(0,7)||'Sin fecha'
+    if(!acc[year]) acc[year]={}
+    if(!acc[year][month]) acc[year][month]=[]
     acc[year][month].push(r)
     return acc
-  }, {})
+  },{})
 
-  const years = Object.keys(byYear).sort((a,b) => b.localeCompare(a))
+  const years = Object.keys(byYear).sort((a,b)=>b.localeCompare(a))
 
-  // Year-level stats
-  const yearStats = (monthsObj) => {
-    const all = Object.values(monthsObj).flat()
+  const yearStats = (months) => {
+    const all = Object.values(months).flat()
     return {
-      inspecciones: all.length,
-      ok: all.reduce((s,r) => s + (r.totalOk||0), 0),
-      novedades: all.reduce((s,r) => s + (r.totalNovedad||0), 0),
+      n: all.length,
+      ok: all.reduce((s,r)=>s+(r.totalOk||0),0),
+      nov: all.reduce((s,r)=>s+(r.totalNovedad||0),0),
     }
   }
 
-  const monthLabel = (key) => {
-    const [, m] = key.split('-')
-    return MONTH_NAMES[parseInt(m,10)-1] || key
+  const S = { // shared styles
+    card: { background:'#111827', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12 },
+    label: { fontSize:11, fontWeight:500, color:'#475569', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:'JetBrains Mono,monospace' },
   }
 
   return (
-    <div className="min-h-screen bg-[#0F172A] pb-16">
-      <div className="h-0.5 w-full" style={{background:'linear-gradient(90deg,#2563EB,#16A34A)'}}/>
+    <div style={{minHeight:'100vh', background:'#0A0F1E', paddingBottom:80}}>
       <TopBar title="Informes de Inspección" back/>
 
       {loading ? (
-        <div className="px-4 pt-4 space-y-3">
-          {[1,2,3].map(i=>(
-            <div key={i} className="skeleton h-24 rounded-xl"/>
-          ))}
+        <div style={{padding:'16px'}}>
+          {[1,2,3].map(i=><div key={i} className="skeleton" style={{height:88,borderRadius:12,marginBottom:8}}/>)}
         </div>
-      ) : reports.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 px-8 text-center">
-          <p className="font-mono text-slate-600 text-sm uppercase tracking-widest">0 INFORMES</p>
-          <p className="text-slate-700 text-xs font-mono mt-2">Aún no se han generado inspecciones</p>
+      ) : reports.length===0 ? (
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',
+                     padding:'80px 32px',textAlign:'center'}}>
+          <div style={{fontSize:40,marginBottom:16}}>📋</div>
+          <p style={{fontSize:15,fontWeight:600,color:'#334155',margin:0}}>Sin informes aún</p>
+          <p style={{fontSize:13,color:'#1E293B',margin:'8px 0 0'}}>Los informes aparecen aquí al finalizar una inspección</p>
         </div>
       ) : (
-        <div className="px-4 pt-4 pb-4 space-y-3">
+        <div style={{padding:'12px 16px', display:'flex', flexDirection:'column', gap:8}}>
           {years.map(year => {
             const months = byYear[year]
             const collapsed = collapsedYears[year]
-            const stats = yearStats(months)
-            const monthKeys = Object.keys(months).sort((a,b) => b.localeCompare(a))
-            const isCurrentYear = year === new Date().getFullYear().toString()
+            const st = yearStats(months)
+            const monthKeys = Object.keys(months).sort((a,b)=>b.localeCompare(a))
+            const isCurrent = year===new Date().getFullYear().toString()
 
             return (
               <div key={year}>
-                {/* Year header — collapsible */}
-                <button
-                  onClick={() => toggleYear(year)}
-                  className="w-full card-highlight rounded-2xl border border-white/8 p-4 text-left transition-all active:scale-[0.99]"
-                  style={{background: isCurrentYear ? '#162032' : '#1E293B'}}>
-
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {/* Chevron */}
-                      <div className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                           style={{background: isCurrentYear ? '#2563EB22' : '#ffffff08', border:'1px solid rgba(255,255,255,0.08)'}}>
-                        <svg width="14" height="14" fill="none" stroke={isCurrentYear ? '#2563EB' : '#475569'}
-                             strokeWidth="2.5" viewBox="0 0 24 24"
-                             style={{transform: collapsed ? 'rotate(-90deg)' : 'rotate(0deg)', transition:'transform 0.2s'}}>
-                          <path d="M6 9l6 6 6-6"/>
-                        </svg>
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <p className="font-mono text-2xl font-bold"
-                             style={{color: isCurrentYear ? '#FFFFFF' : '#64748B'}}>
-                            {year}
-                          </p>
-                          {isCurrentYear && (
-                            <span className="font-mono text-[10px] px-2 py-0.5 rounded-full"
-                                  style={{background:'#2563EB22', color:'#2563EB', border:'1px solid #2563EB44'}}>
-                              AÑO ACTUAL
-                            </span>
-                          )}
-                        </div>
-                        <p className="font-mono text-[10px] text-slate-600 mt-0.5">
-                          {stats.inspecciones} inspección{stats.inspecciones !== 1 ? 'es' : ''} · {monthKeys.length} {monthKeys.length === 1 ? 'mes' : 'meses'}
-                        </p>
-                      </div>
-                    </div>
-
-                    {/* Year summary pills */}
-                    <div className="flex flex-col gap-1 text-right">
-                      <span className="font-mono text-[10px] text-emerald-500">✓ {stats.ok} ok</span>
-                      {stats.novedades > 0 && (
-                        <span className="font-mono text-[10px] text-red-500">⚠ {stats.novedades} nov.</span>
+                {/* Year header */}
+                <button onClick={()=>toggleYear(year)}
+                  style={{...S.card, width:'100%', padding:'14px 16px', cursor:'pointer',
+                          display:'flex', alignItems:'center', justifyContent:'space-between',
+                          marginBottom:collapsed?4:0, border:`1px solid ${isCurrent?'rgba(29,111,232,0.2)':'rgba(255,255,255,0.06)'}`,
+                          background:isCurrent?'rgba(29,111,232,0.05)':'#111827'}}>
+                  <div style={{display:'flex', alignItems:'center', gap:12}}>
+                    <div style={{display:'flex', alignItems:'center', gap:8}}>
+                      <svg style={{transform:collapsed?'rotate(-90deg)':'rotate(0deg)', transition:'0.2s',
+                                   color:isCurrent?'#60A5FA':'#475569'}}
+                           width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
+                        <path d="M6 9l6 6 6-6"/>
+                      </svg>
+                      <span style={{fontFamily:'JetBrains Mono,monospace', fontSize:26, fontWeight:700,
+                                    color:isCurrent?'#F1F5F9':'#475569', letterSpacing:'-0.02em'}}>
+                        {year}
+                      </span>
+                      {isCurrent && (
+                        <span style={{fontSize:10, fontWeight:600, padding:'2px 7px', borderRadius:5,
+                                      background:'rgba(29,111,232,0.15)', color:'#60A5FA',
+                                      textTransform:'uppercase', letterSpacing:'0.06em'}}>
+                          Actual
+                        </span>
                       )}
                     </div>
+                    <span style={{...S.label, fontSize:10}}>{st.n} insp. · {monthKeys.length} {monthKeys.length===1?'mes':'meses'}</span>
+                  </div>
+                  <div style={{display:'flex', gap:12, alignItems:'center'}}>
+                    <span style={{fontSize:12, fontWeight:600, color:'#4ADE80'}}>✓ {st.ok}</span>
+                    {st.nov>0&&<span style={{fontSize:12, fontWeight:600, color:'#F87171'}}>⚠ {st.nov}</span>}
                   </div>
                 </button>
 
-                {/* Months — shown when expanded */}
+                {/* Months */}
                 {!collapsed && (
-                  <div className="mt-2 space-y-4 pl-2 border-l-2 border-white/5 ml-4">
-                    {monthKeys.map(monthKey => (
-                      <div key={monthKey}>
-                        {/* Month label */}
-                        <p className="font-mono text-[10px] uppercase tracking-widest text-slate-600 mb-2 pl-3">
-                          {monthLabel(monthKey)} {year}
-                        </p>
-
-                        {/* Report cards */}
-                        <div className="space-y-2">
-                          {[...months[monthKey]].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).map(r => {
-                            const coverage = r.totalRegistered > 0
-                              ? Math.round(((r.totalInspected||0) / r.totalRegistered) * 100)
-                              : 100
-                            const hasNovedad = (r.totalNovedad||0) > 0
-                            const hasOmitidos = (r.totalOmitidos||0) > 0
-
+                  <div style={{paddingLeft:12, borderLeft:'2px solid rgba(255,255,255,0.04)',
+                               marginLeft:12, marginBottom:4, display:'flex', flexDirection:'column', gap:12}}>
+                    {monthKeys.map(mk => (
+                      <div key={mk}>
+                        <p style={{...S.label, margin:'12px 0 6px 4px'}}>{monthLabel(mk)} {year}</p>
+                        <div style={{display:'flex', flexDirection:'column', gap:4}}>
+                          {[...months[mk]].sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0)).map(r => {
+                            const cov = r.totalRegistered>0 ? Math.round(((r.totalInspected||0)/r.totalRegistered)*100) : 100
+                            const hasNov = (r.totalNovedad||0)>0
+                            const hasOmit = (r.totalOmitidos||0)>0
                             return (
-                              <div key={r.id}
-                                   className="card-highlight rounded-xl border border-white/8 p-4"
-                                   style={{background:'#1E293B'}}>
-                                <div className="flex items-start gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    {/* Date + inspector */}
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <p className="font-mono text-sm font-bold text-white">{r.date}</p>
-                                      {r.startTime && (
-                                        <span className="font-mono text-[10px] text-slate-600">{r.startTime}{r.endTime ? ` → ${r.endTime}` : ''}</span>
-                                      )}
+                              <div key={r.id} style={{...S.card, padding:'14px 16px',
+                                                      borderLeft:`3px solid ${hasNov?'#DC2626':cov===100?'#15803D':'#1D6FE8'}`}}>
+                                <div style={{display:'flex', alignItems:'flex-start', gap:12}}>
+                                  <div style={{flex:1, minWidth:0}}>
+                                    {/* Date + time */}
+                                    <div style={{display:'flex', alignItems:'baseline', gap:8, flexWrap:'wrap'}}>
+                                      <span style={{fontSize:14, fontWeight:600, color:'#F1F5F9',
+                                                    fontFamily:'JetBrains Mono,monospace'}}>
+                                        {r.date}
+                                      </span>
+                                      <span style={{fontSize:12, color:'#1D6FE8', fontFamily:'JetBrains Mono,monospace'}}>
+                                        {r.startTime||'--'} → {r.endTime||'--'}
+                                      </span>
                                     </div>
-                                    <p className="text-slate-500 text-xs uppercase tracking-widest font-mono mt-0.5">{r.inspectorName}</p>
-
+                                    <p style={{fontSize:12, color:'#64748B', margin:'3px 0 8px',
+                                               overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap'}}>
+                                      {r.inspectorName}
+                                    </p>
                                     {/* Coverage bar */}
-                                    <div className="flex items-center gap-2 mt-2">
-                                      <div className="flex-1 bg-slate-800 rounded-full h-1 overflow-hidden">
-                                        <div className="h-1 rounded-full transition-all"
-                                             style={{
-                                               width:`${coverage}%`,
-                                               background: coverage===100 ? '#22C55E' : coverage >= 80 ? '#2563EB' : '#F59E0B'
-                                             }}/>
+                                    <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
+                                      <div style={{flex:1, height:3, background:'rgba(255,255,255,0.06)', borderRadius:2, overflow:'hidden'}}>
+                                        <div style={{height:'100%', borderRadius:2, transition:'width .4s',
+                                                     width:`${cov}%`,
+                                                     background:cov===100?'#15803D':cov>=80?'#1D6FE8':'#B45309'}}/>
                                       </div>
-                                      <span className="font-mono text-[10px] text-slate-500 flex-shrink-0">{coverage}%</span>
+                                      <span style={{fontSize:10, color:'#475569',
+                                                    fontFamily:'JetBrains Mono,monospace'}}>{cov}%</span>
                                     </div>
-
-                                    {/* Stats row */}
-                                    <div className="flex gap-3 mt-2 flex-wrap">
-                                      <span className="font-mono text-xs text-slate-500">{r.totalInspected} rev.</span>
-                                      <span className="font-mono text-xs text-emerald-500">✓ {r.totalOk}</span>
-                                      {hasNovedad && (
-                                        <span className="font-mono text-xs text-red-500">⚠ {r.totalNovedad}</span>
-                                      )}
-                                      {hasOmitidos && (
-                                        <span className="font-mono text-xs text-amber-500">— {r.totalOmitidos} omit.</span>
-                                      )}
+                                    {/* Stats */}
+                                    <div style={{display:'flex', gap:12}}>
+                                      <span style={{fontSize:12, color:'#475569'}}>{r.totalInspected} rev.</span>
+                                      <span style={{fontSize:12, color:'#4ADE80', fontWeight:500}}>✓ {r.totalOk}</span>
+                                      {hasNov&&<span style={{fontSize:12, color:'#F87171', fontWeight:500}}>⚠ {r.totalNovedad}</span>}
+                                      {hasOmit&&<span style={{fontSize:12, color:'#FCD34D'}}>— {r.totalOmitidos} omit.</span>}
                                     </div>
                                   </div>
-
-                                  {/* Action button */}
-                                  <button onClick={() => handleOpen(r)}
-                                    className="flex-shrink-0 font-mono text-xs font-semibold px-3 rounded-xl transition-colors flex flex-col items-center gap-1"
-                                    style={{minHeight:52, minWidth:64, background:'#2563EB22', color:'#2563EB', border:'1px solid #2563EB44'}}>
-                                    <span className="text-lg">📄</span>
-                                    <span className="text-[10px]">Ver</span>
+                                  {/* PDF button */}
+                                  <button onClick={()=>handleOpen(r)}
+                                    style={{flexShrink:0, minHeight:52, minWidth:52, borderRadius:10,
+                                            border:'1px solid rgba(29,111,232,0.3)',
+                                            background:'rgba(29,111,232,0.08)', color:'#60A5FA',
+                                            cursor:'pointer', display:'flex', flexDirection:'column',
+                                            alignItems:'center', justifyContent:'center', gap:3}}>
+                                    <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.8" viewBox="0 0 24 24">
+                                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                      <polyline points="14 2 14 8 20 8"/>
+                                      <line x1="12" y1="18" x2="12" y2="12"/>
+                                      <line x1="9" y1="15" x2="15" y2="15"/>
+                                    </svg>
+                                    <span style={{fontSize:9, fontFamily:'JetBrains Mono,monospace',
+                                                  fontWeight:600, letterSpacing:'0.06em'}}>PDF</span>
                                   </button>
                                 </div>
                               </div>
