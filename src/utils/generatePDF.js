@@ -23,6 +23,7 @@ function tipoBucket(type) {
 // index = column index in the table (0-based)
 const VERTICAL_COLS = {
   2:  'POS',
+  7:  'CAPACIDAD',
   3:  ['SOLKA','FLAM'],
   4:  'CO2',
   5:  'AGUA',
@@ -108,7 +109,7 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
       chk(e.checks?.signage),
       e.placa||'',
       e.lastHydroTest||'',
-      e.homolograma==='sin_homolograma'?'S/HOMO':e.homolograma?e.homolograma.replace(/_/g,' ').toUpperCase():'',
+      e.homolograma&&e.homolograma!=='sin_homolograma'?e.homolograma.replace(/_/g,' ').toUpperCase():'',
       e.novedad||'',
       inspection.inspectorName,
     ]
@@ -131,7 +132,7 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
         {content:'# PLACA\nINVENT.',  rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5.5}},
         {content:'FECHA\nULT TEST',   rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5.5}},
         {content:'HOMOLOG.',           rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5.5}},
-        {content:'OBSERV.',            rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5.5}},
+        {content:'OBSERVACIONES',      rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5.5}},
         {content:'FIRMA BOMBERO\nQUE EFECTUO\nLA REVISION', rowSpan:2, styles:{valign:'middle',halign:'center',fontStyle:'bold',fontSize:5}},
       ],
       // ROW 2 — vertical column names (content empty — drawn in didDrawCell)
@@ -212,11 +213,12 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
       const textY = y + height - 2  // start near bottom
 
       if (Array.isArray(label)) {
-        // Multi-line vertical text (e.g. MANIJA DE / TRANSPORTE)
-        // Draw second line first (lower), then first line above it
-        const lineGap = 5 // mm between lines
-        doc.text(label[1], textX, textY,           {angle:90, align:'left'})
-        doc.text(label[0], textX, textY - lineGap, {angle:90, align:'left'})
+        // Multi-line vertical text reading bottom to top
+        // angle:90 draws text going upward from textY
+        // Line 0 = first word (bottom), Line 1 = second word (above it)
+        const lineGap = 4.5
+        doc.text(label[0], textX, textY,           {angle:90, align:'left'})
+        doc.text(label[1], textX, textY - lineGap, {angle:90, align:'left'})
       } else {
         doc.text(label, textX, textY, {angle:90, align:'left'})
       }
