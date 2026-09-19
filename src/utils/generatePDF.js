@@ -70,14 +70,7 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
     doc.text('A', 22.5, 20, {align:'center'})
     doc.setTextColor(...BLACK)
   }
-  // Text below logo — centered in cell
-  doc.setTextColor(...BLACK)
-  doc.setFont('helvetica','bold')
-  doc.setFontSize(5)
-  doc.text('AERONAUTICA CIVIL', 22.5, 28.5, {align:'center'})
-  doc.setFont('helvetica','normal')
-  doc.setFontSize(4)
-  doc.text('UNIDAD ADMINISTRATIVA ESPECIAL', 22.5, 32, {align:'center'})
+  // Text already included in logo image — no extra text needed
 
   // Title — black, no color
   doc.setFont('helvetica','bold')
@@ -112,7 +105,7 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
 
   const rows = extinguishers.map((e, i) => {
     const tb  = tipoBucket(e.type)
-    const cap = e.capacity ? `${e.capacity}${e.capacityUnit?' '+e.capacityUnit:''}` : ''
+    const cap = e.capacity || ''
     return [
       i+1,
       `${e.zone||''}\n${e.exactLocation||''}`,
