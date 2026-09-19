@@ -24,7 +24,7 @@ function tipoBucket(type) {
 const VERTICAL_COLS = {
   2:  'POS',
   7:  'CAPACIDAD',
-  3:  ['SOLKA','FLAM'],
+  3:  'SOLKAFLAM',
   4:  'CO2',
   5:  'AGUA',
   6:  'OTRO',
@@ -230,7 +230,7 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
         // Multi-line vertical text reading bottom to top
         // angle:90 draws text going upward from textY
         // Line 0 = first word (bottom), Line 1 = second word (above it)
-        const lineGap = 13
+        const lineGap = 10
         doc.text(label[0], textX, textY,           {angle:90, align:'left'})
         doc.text(label[1], textX, textY - lineGap, {angle:90, align:'left'})
       } else {
