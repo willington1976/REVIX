@@ -40,6 +40,50 @@ const VERTICAL_COLS = {
   16: 'SEÑALIZACION',
 }
 
+function drawPageHeader(doc, inspection, airportName, W, LG, MG, BK, DG) {
+  // Outer border
+  doc.setDrawColor(...MG); doc.setLineWidth(0.4)
+  doc.rect(5, 5, W-10, H_HEADER)
+
+  // Vertical divider after logo
+  doc.setLineWidth(0.3)
+  doc.line(40, 5, 40, 5+H_HEADER)
+  doc.line(W-45, 5, W-45, 15)
+
+  // FORMATO — full width gray band
+  doc.setFillColor(...LG)
+  doc.rect(40, 5, W-10-35, 10, 'F')
+  doc.rect(40, 5, W-10-35, 10)
+  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...BK)
+  doc.text('FORMATO', 40+(W-10-35)/2, 11.5, {align:'center'})
+
+  // Logo cell white background
+  doc.setFillColor(255,255,255)
+  doc.rect(5.5, 5.5, 34, H_HEADER-0.5, 'F')
+  const logoW=26, logoH=26, logoX=5+(35-logoW)/2, logoY=6
+  try { doc.addImage(AEROCIVIL_LOGO,'PNG',logoX,logoY,logoW,logoH) } catch(e) {}
+
+  // Title
+  const cx = 40+(W-10-40)/2
+  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(120,120,120)
+  doc.text('REVISION TECNICA DE EXTINTORES', cx, 5+14, {align:'center'})
+  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...DG)
+  doc.text(`Aeropuerto: ${airportName}`, cx, 5+21, {align:'center'})
+  doc.text(`Inspector: ${inspection.inspectorName}   |   Fecha: ${inspection.date}   |   Hora inicio: ${inspection.startTime||'--'}   Hora fin: ${inspection.endTime||'--'}`, cx, 5+26, {align:'center'})
+
+  // Metadata strip
+  const mY = 5+H_HEADER
+  doc.setDrawColor(...MG); doc.rect(5, mY, W-10, 8)
+  const mw=(W-10)/3
+  doc.line(5+mw,mY,5+mw,mY+8); doc.line(5+mw*2,mY,5+mw*2,mY+8)
+  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...BK)
+  doc.text('Clave: MSER 5.0-12-006',          5+mw/2,      mY+5, {align:'center'})
+  doc.text('Version: 04',                      5+mw+mw/2,   mY+5, {align:'center'})
+  doc.text('Fecha de aprobacion: 29/11/2022',  5+mw*2+mw/2, mY+5, {align:'center'})
+}
+
+const H_HEADER = 32 // header block height in mm
+
 export function generateInspectionPDF(inspection, extinguishers, airportName, omitidos=[]) {
   const doc = new jsPDF({ orientation:'landscape', unit:'mm', format:'a4' })
   const W = doc.internal.pageSize.getWidth()
@@ -47,52 +91,11 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
 
   const BK=[0,0,0], WH=[255,255,255], LG=[210,210,210], MG=[180,180,180], DG=[80,80,80]
 
-  // ── OUTER BORDER ─────────────────────────────────────
-  doc.setDrawColor(...MG); doc.setLineWidth(0.4)
-  doc.rect(5, 5, W-10, H-10)
-
-  // ── HEADER BOX ───────────────────────────────────────
-  doc.setLineWidth(0.3)
-  doc.rect(5, 5, W-10, 32)
-  doc.line(40, 5, 40, 37)
-  doc.line(W-45, 5, W-45, 15)
-
-  // FORMATO — full width gray band across top (from logo divider to right edge)
-  doc.setFillColor(...LG)
-  doc.rect(40, 5, W-10-35, 10, 'F')
-  doc.rect(40, 5, W-10-35, 10)
-  doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(...BK)
-  doc.text('FORMATO', 40+(W-10-35)/2, 11.5, {align:'center'})
-
-  // Logo centered in cell (x:5 to 40 = 35mm wide)
-  const logoW=26, logoH=26, logoX=5+(35-logoW)/2, logoY=6
-  // Paint entire logo cell white first (covers any gray cell background)
-  doc.setFillColor(255,255,255)
-  doc.rect(5.5, 5.5, 34, 31, 'F')
-  try {
-    doc.addImage(AEROCIVIL_LOGO,'PNG',logoX,logoY,logoW,logoH)
-  } catch(e) {}
-
-  // Title — gray, not black, matching original
-  doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(120,120,120)
-  const cx = 40+(W-10-40)/2
-  doc.text('REVISION TECNICA DE EXTINTORES', cx, 21, {align:'center'})
-  doc.setFont('helvetica','normal'); doc.setFontSize(7); doc.setTextColor(...DG)
-  doc.text(`Aeropuerto: ${airportName}`, cx, 26, {align:'center'})
-  doc.text(`Inspector: ${inspection.inspectorName}   |   Fecha: ${inspection.date}   |   Hora inicio: ${inspection.startTime||'--'}   Hora fin: ${inspection.endTime||'--'}`, cx, 31, {align:'center'})
-
-  // ── METADATA STRIP ───────────────────────────────────
-  const mY=37
-  doc.setDrawColor(...MG); doc.rect(5,mY,W-10,8)
-  const mw=(W-10)/3
-  doc.line(5+mw,mY,5+mw,mY+8); doc.line(5+mw*2,mY,5+mw*2,mY+8)
-  doc.setFont('helvetica','bold'); doc.setFontSize(6.5); doc.setTextColor(...BK)
-  doc.text('Clave: MSER 5.0-12-006',         5+mw/2,     mY+5, {align:'center'})
-  doc.text('Version: 04',                     5+mw+mw/2,  mY+5, {align:'center'})
-  doc.text('Fecha de aprobacion: 29/11/2022', 5+mw*2+mw/2,mY+5, {align:'center'})
+  // Draw header on page 1
+  drawPageHeader(doc, inspection, airportName, W, LG, MG, BK, DG)
 
   // ── TABLE ────────────────────────────────────────────
-  const tY = mY+9
+  const tY = 5 + H_HEADER + 8 + 1  // header + metadata strip + gap
 
   const rows = extinguishers.map((e,i) => {
     const tb  = tipoBucket(e.type)
@@ -122,7 +125,7 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
 
   autoTable(doc, {
     startY: tY,
-    margin: {left:5, right:5},
+    margin: {left:5, right:5, top: 5+H_HEADER+8+1},
     head: [
       // ROW 1 — group labels (horizontal)
       [
@@ -241,6 +244,11 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
       }
     },
 
+    didDrawPage(data) {
+      // Repeat institutional header on every page
+      drawPageHeader(doc, inspection, airportName, W, LG, MG, BK, DG)
+    },
+
     didParseCell(data) {
       if (data.section!=='body') return
       if (data.column.index>=2&&data.column.index<=6&&data.cell.raw==='X') {
@@ -254,10 +262,10 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
 
   const finalY = doc.lastAutoTable.finalY
 
-  // ── SIGNATURES ───────────────────────────────────────
-  const sigY = Math.min(finalY+8, H-32)
-  doc.setFont('helvetica','normal'); doc.setFontSize(9)
-  doc.setTextColor(...BK); doc.setDrawColor(...BK); doc.setLineWidth(0.3)
+  // ── SIGNATURES — last page only, compact, same font as table body ──
+  const sigY = Math.min(finalY+6, H-30)
+  doc.setFont('helvetica','normal'); doc.setFontSize(6)
+  doc.setTextColor(...BK); doc.setDrawColor(...BK); doc.setLineWidth(0.25)
 
   ;[
     {label:'Fecha',              value: inspection.date},
@@ -265,13 +273,13 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
     {label:'Oficial de Servicio',value: ''},
     {label:'Lider de Estacion',  value: ''},
   ].forEach((s,i) => {
-    const y = sigY + i*9
-    doc.setFont('helvetica','bold')
+    const y = sigY + i*7
+    doc.setFont('helvetica','bold'); doc.setFontSize(6)
     doc.text(s.label, 8, y)
-    const lw = doc.getStringUnitWidth(s.label)*9*0.352+3
+    const lw = doc.getStringUnitWidth(s.label)*6*0.352+2
     doc.setFont('helvetica','normal')
-    doc.line(8+lw, y+1, 130, y+1)
-    if (s.value) { doc.setFontSize(8); doc.text(s.value, 8+lw+1, y-0.2); doc.setFontSize(9) }
+    doc.line(8+lw, y+0.8, 110, y+0.8)
+    if (s.value) { doc.text(s.value, 8+lw+1, y-0.2) }
   })
 
   // Footer
