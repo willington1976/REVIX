@@ -55,27 +55,29 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
   doc.setTextColor(...BLACK)
   doc.text('FORMATO', W-25, 11.5, {align:'center'})
 
-  // Logo — embed real image
+  // Logo — centered in cell (cell is 5 to 40, so center = 22.5)
+  // Logo image 20x20, centered horizontally in 35mm cell
+  const logoX = 5 + (35-20)/2   // = 12.5
+  const logoY = 6
   try {
-    doc.addImage(AEROCIVIL_LOGO, 'PNG', 7, 6, 17, 17)
+    doc.addImage(AEROCIVIL_LOGO, 'PNG', logoX, logoY, 20, 20)
   } catch(e) {
-    // fallback circle
     doc.setFillColor(...BLUE)
-    doc.circle(15.5, 14.5, 8, 'F')
+    doc.circle(22.5, 16, 9, 'F')
     doc.setTextColor(...WHITE)
-    doc.setFontSize(11)
+    doc.setFontSize(12)
     doc.setFont('helvetica','bold')
-    doc.text('A', 15.5, 18, {align:'center'})
+    doc.text('A', 22.5, 20, {align:'center'})
+    doc.setTextColor(...BLACK)
   }
-
-  // "AERONAUTICA CIVIL / UNIDAD ADMINISTRATIVA ESPECIAL" below logo inside cell
+  // Text below logo — centered in cell
   doc.setTextColor(...BLACK)
   doc.setFont('helvetica','bold')
-  doc.setFontSize(5.5)
-  doc.text('AERONAUTICA CIVIL', 22.5, 26, {align:'center'})
+  doc.setFontSize(5)
+  doc.text('AERONAUTICA CIVIL', 22.5, 28.5, {align:'center'})
   doc.setFont('helvetica','normal')
-  doc.setFontSize(4.5)
-  doc.text('UNIDAD ADMINISTRATIVA ESPECIAL', 22.5, 30, {align:'center'})
+  doc.setFontSize(4)
+  doc.text('UNIDAD ADMINISTRATIVA ESPECIAL', 22.5, 32, {align:'center'})
 
   // Title — black, no color
   doc.setFont('helvetica','bold')
@@ -145,7 +147,7 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
         {content:'N°',         rowSpan:3, styles:{valign:'bottom', halign:'center'}},
         {content:'UBICACION',  rowSpan:3, styles:{valign:'bottom', halign:'center'}},
         {content:'TIPO',       colSpan:5, styles:{halign:'center'}},
-        {content:'CAPACIDAD',  rowSpan:3, styles:{valign:'bottom', halign:'center'}},
+        {content:'CAP.',  rowSpan:3, styles:{valign:'bottom', halign:'center'}},
         {content:'REVISION ESTADO GENERAL', colSpan:9, styles:{halign:'center'}},
         {content:'# PLACA\nINVENTARIO',   rowSpan:3, styles:{valign:'bottom', halign:'center'}},
         {content:'FECHA ULT\nTEST',       rowSpan:3, styles:{valign:'bottom', halign:'center'}},
@@ -221,22 +223,8 @@ export function generateInspectionPDF(inspection, extinguishers, airportName, om
 
   const finalY = doc.lastAutoTable.finalY
 
-  // ── OMITIDOS ─────────────────────────────────────────
-  if (omitidos && omitidos.length > 0) {
-    const omY = finalY + 3
-    doc.setFontSize(6)
-    doc.setFont('helvetica','bold')
-    doc.setTextColor(...RED)
-    doc.text(`Extintores NO inspeccionados (${omitidos.length}):`, 8, omY+4)
-    doc.setFont('helvetica','normal')
-    doc.setTextColor(...DGRAY)
-    omitidos.forEach((o,i) => {
-      doc.text(`${i+1}. ${o.serial} - ${o.zone} > ${o.exactLocation}`, 12, omY+8+i*4)
-    })
-  }
-
   // ── SIGNATURES — exact match to official format ───────
-  const sigBaseY = finalY + (omitidos.length>0 ? 10+omitidos.length*4 : 6)
+  const sigBaseY = finalY + 8
   const sigY = Math.min(sigBaseY, H-30)
 
   doc.setFont('helvetica','normal')
