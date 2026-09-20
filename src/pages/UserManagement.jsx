@@ -44,7 +44,7 @@ const ROLE_CFG = {
 }
 
 const inputStyle = {
-  width:'100%', background:'#0A0F1E', border:'1px solid rgba(255,255,255,0.08)',
+  width:'100%', background:'#111827', border:'1px solid rgba(255,255,255,0.12)',
   color:'#F1F5F9', borderRadius:10, padding:'0 16px', fontSize:14,
   minHeight:48, outline:'none', fontFamily:'Inter,sans-serif'
 }
@@ -130,7 +130,7 @@ export default function UserManagement() {
 
   // ── NEW USER FORM ─────────────────────────────────────
   if (showForm) return (
-    <div style={{minHeight:'100vh',background:'#0A0F1E',paddingBottom:80}}>
+    <div style={{minHeight:'100vh',background:'#111827',paddingBottom:80}}>
       <TopBar title="Nuevo usuario" back/>
       <div style={{padding:'20px 16px',display:'flex',flexDirection:'column',gap:16}}>
 
@@ -148,8 +148,8 @@ export default function UserManagement() {
               return (
                 <button key={r.v} onClick={()=>set('role',r.v)}
                   style={{padding:'12px 8px',borderRadius:10,cursor:'pointer',textAlign:'center',
-                          background:active?cfg.bg:'#111827',
-                          border:`1px solid ${active?cfg.color:'rgba(255,255,255,0.06)'}`,
+                          background:active?cfg.bg:'#1E293B',
+                          border:`1px solid ${active?cfg.color:'rgba(255,255,255,0.10)'}`,
                           transition:'all .15s'}}>
                   <span style={{fontSize:18,display:'block',marginBottom:4}}>{r.icon}</span>
                   <span style={{fontSize:11,fontWeight:600,color:active?cfg.color:'#64748B'}}>{r.l}</span>
@@ -181,7 +181,7 @@ export default function UserManagement() {
 
         {/* Preview */}
         {form.name && form.airportCode && (
-          <div style={{background:'#111827',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:16,display:'flex',alignItems:'center',gap:12}}>
+          <div style={{background:'#1E293B',border:'1px solid rgba(255,255,255,0.10)',borderRadius:12,padding:16,display:'flex',alignItems:'center',gap:12}}>
             <div style={{width:40,height:40,borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',
                          background:ROLE_CFG[form.role].bg,flexShrink:0}}>
               <span style={{fontSize:16,fontWeight:700,color:ROLE_CFG[form.role].color}}>
@@ -201,7 +201,7 @@ export default function UserManagement() {
 
         <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8,marginTop:4}}>
           <button onClick={()=>setShowForm(false)}
-            style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',
+            style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.12)',
                     background:'transparent',color:'#64748B',fontWeight:500,fontSize:14,cursor:'pointer'}}>
             Cancelar
           </button>
@@ -218,7 +218,7 @@ export default function UserManagement() {
 
   // ── MAIN LIST ─────────────────────────────────────────
   return (
-    <div style={{minHeight:'100vh',background:'#0A0F1E',paddingBottom:80}}>
+    <div style={{minHeight:'100vh',background:'#111827',paddingBottom:80}}>
       <TopBar title="Gestión de Usuarios"
         back
         right={
@@ -232,11 +232,11 @@ export default function UserManagement() {
 
       {/* Summary */}
       <div style={{padding:'16px 16px 8px',display:'flex',gap:8}}>
-        <div style={{flex:1,background:'#111827',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:'12px 16px'}}>
+        <div style={{flex:1,background:'#1E293B',border:'1px solid rgba(255,255,255,0.10)',borderRadius:12,padding:'12px 16px'}}>
           <p style={{fontFamily:'JetBrains Mono,monospace',fontSize:24,fontWeight:700,color:'#F1F5F9',margin:0}}>{users.length}</p>
           <p style={{fontSize:11,color:'#64748B',margin:'2px 0 0',textTransform:'uppercase',letterSpacing:'0.06em'}}>Usuarios activos</p>
         </div>
-        <div style={{flex:1,background:'#111827',border:'1px solid rgba(255,255,255,0.06)',borderRadius:12,padding:'12px 16px'}}>
+        <div style={{flex:1,background:'#1E293B',border:'1px solid rgba(255,255,255,0.10)',borderRadius:12,padding:'12px 16px'}}>
           <p style={{fontFamily:'JetBrains Mono,monospace',fontSize:24,fontWeight:700,color:'#60A5FA',margin:0}}>{Object.keys(grouped).length}</p>
           <p style={{fontSize:11,color:'#64748B',margin:'2px 0 0',textTransform:'uppercase',letterSpacing:'0.06em'}}>Aeropuertos</p>
         </div>
@@ -261,7 +261,7 @@ export default function UserManagement() {
                   const isMe = u.id === user?.uid
                   return (
                     <div key={u.id}
-                      style={{background:'#111827',border:'1px solid rgba(255,255,255,0.06)',
+                      style={{background:'#1E293B',border:'1px solid rgba(255,255,255,0.10)',
                               borderRadius:12,padding:'14px 16px',display:'flex',alignItems:'center',gap:12,
                               opacity:u.active===false?0.5:1}}>
                       {/* Avatar */}
@@ -301,7 +301,7 @@ export default function UserManagement() {
                       {/* Three dots — only for non-self and admin */}
                       {isAdmin && !isMe && (
                         <button onClick={()=>setSheet(u)}
-                          style={{width:36,height:36,borderRadius:8,border:'1px solid rgba(255,255,255,0.08)',
+                          style={{width:36,height:36,borderRadius:8,border:'1px solid rgba(255,255,255,0.12)',
                                   background:'rgba(255,255,255,0.04)',cursor:'pointer',
                                   display:'flex',alignItems:'center',justifyContent:'center',flexShrink:0,
                                   color:'#64748B',fontSize:18,fontWeight:700}}>
@@ -327,7 +327,7 @@ export default function UserManagement() {
             <div className="sheet-handle"/>
 
             {/* User info in sheet */}
-            <div style={{padding:'0 20px 16px',borderBottom:'1px solid rgba(255,255,255,0.06)'}}>
+            <div style={{padding:'0 20px 16px',borderBottom:'1px solid rgba(255,255,255,0.10)'}}>
               <p style={{fontSize:15,fontWeight:600,color:'#F1F5F9',margin:0}}>{sheet.name}</p>
               <p style={{fontSize:12,color:'#64748B',margin:'2px 0 0'}}>{sheet.email}</p>
               <p style={{fontSize:11,fontWeight:600,marginTop:6,fontFamily:'JetBrains Mono,monospace',color:'#475569'}}>
@@ -347,7 +347,7 @@ export default function UserManagement() {
                       <button key={r} onClick={()=>handleChangeRole(sheet.id,r)}
                         style={{padding:'8px 4px',borderRadius:8,cursor:'pointer',textAlign:'center',
                                 background:active?cfg.bg:'rgba(255,255,255,0.03)',
-                                border:`1px solid ${active?cfg.color:'rgba(255,255,255,0.06)'}`,
+                                border:`1px solid ${active?cfg.color:'rgba(255,255,255,0.10)'}`,
                                 fontSize:11,fontWeight:600,color:active?cfg.color:'#64748B'}}>
                         {cfg.label}
                       </button>
@@ -397,7 +397,7 @@ export default function UserManagement() {
       {/* Delete confirmation */}
       {confirmDelete && (
         <div className="backdrop">
-          <div style={{background:'#1A2235',border:'1px solid rgba(220,38,38,0.3)',borderRadius:'20px 20px 0 0',
+          <div style={{background:'#243044',border:'1px solid rgba(220,38,38,0.3)',borderRadius:'20px 20px 0 0',
                        width:'100%',maxWidth:480,padding:'24px 20px 32px'}}>
             <p style={{fontSize:16,fontWeight:700,color:'#F87171',margin:'0 0 6px'}}>⚠ Eliminar usuario</p>
             <p style={{fontSize:14,color:'#94A3B8',margin:'0 0 4px'}}>
@@ -408,7 +408,7 @@ export default function UserManagement() {
             </p>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               <button onClick={()=>setConfirmDelete(null)}
-                style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',
+                style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.12)',
                         background:'transparent',color:'#64748B',fontWeight:500,fontSize:14,cursor:'pointer'}}>
                 Cancelar
               </button>

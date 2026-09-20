@@ -21,7 +21,7 @@ const CHECKS = [
   { key:'signage',  label:'Señalización visible y legible', icon:'🚨' },
 ]
 const defaultChecks = () => ({ pressure:null,pasador:null,seal:null,paint:null,handle:null,hose:null,nozzle:null,cylinder:null,signage:null })
-const BG='#0A0F1E', CARD='#111827', BLUE='#1D6FE8', GREEN='#15803D', RED='#DC2626', AMBER='#B45309'
+const BG='#0A0F1E', CARD='#1E293B', BLUE='#1D6FE8', GREEN='#15803D', RED='#DC2626', AMBER='#B45309'
 
 export default function InspectSession() {
   const { profile } = useAuth()
@@ -320,7 +320,7 @@ export default function InspectSession() {
 
       <div className="flex-1 px-4 pt-4 pb-4 flex flex-col gap-3">
         {camError && (
-          <div style={{background:'#111827',border:'1px solid rgba(220,38,38,0.2)',
+          <div style={{background:'#1E293B',border:'1px solid rgba(220,38,38,0.2)',
                        borderRadius:12,padding:20,textAlign:'center'}}>
             <div style={{width:48,height:48,borderRadius:12,background:'rgba(220,38,38,0.08)',
                          border:'1px solid rgba(220,38,38,0.2)',
@@ -337,7 +337,7 @@ export default function InspectSession() {
             <p style={{fontSize:12,color:'#64748B',margin:'0 0 16px',lineHeight:1.6}}>
               REVIX necesita acceso a la cámara trasera para escanear QRs.
             </p>
-            <div style={{background:'#0A0F1E',borderRadius:8,padding:'12px 14px',textAlign:'left'}}>
+            <div style={{background:'#111827',borderRadius:8,padding:'12px 14px',textAlign:'left'}}>
               <p style={{fontSize:11,fontWeight:600,color:'#94A3B8',margin:'0 0 6px',
                          textTransform:'uppercase',letterSpacing:'0.06em'}}>Cómo activarlo</p>
               <p style={{fontSize:12,color:'#64748B',margin:0,lineHeight:1.7}}>
@@ -426,7 +426,7 @@ export default function InspectSession() {
             {/* Cards of pending extinguishers */}
             <div style={{overflowY:'auto',flex:1,display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
               {pending.map((e,i)=>(
-                <div key={i} style={{background:'#0A0F1E',borderRadius:10,padding:'10px 14px',
+                <div key={i} style={{background:'#111827',borderRadius:10,padding:'10px 14px',
                                       border:`1px solid ${AMBER}33`,borderLeft:`3px solid ${AMBER}`}}>
                   <div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:3}}>
                     <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:15,fontWeight:700,color:'#F1F5F9'}}>{e.serial}</span>
@@ -541,7 +541,7 @@ export default function InspectSession() {
           <textarea value={novedad} onChange={e=>setNovedad(e.target.value)} rows={3}
             placeholder="Describe la novedad encontrada..."
             className="w-full text-white rounded-xl px-3 py-3 text-sm focus:outline-none resize-none font-mono"
-            style={{background:BG,border:`1.5px solid ${hasNovedad&&!novedad?RED+'66':'rgba(255,255,255,0.08)'}`,minHeight:80}}/>
+            style={{background:BG,border:`1.5px solid ${hasNovedad&&!novedad?RED+'66':'rgba(255,255,255,0.12)'}`,minHeight:80}}/>
         </div>
 
         <div className="card-highlight rounded-2xl border border-white/8 p-4" style={{background:CARD}}>

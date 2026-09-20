@@ -21,13 +21,13 @@ export default function Login() {
   }
 
   const inp = {
-    width:'100%', background:'#0A0F1E', border:'1px solid rgba(255,255,255,0.08)',
+    width:'100%', background:'#111827', border:'1px solid rgba(255,255,255,0.12)',
     color:'#F1F5F9', borderRadius:10, padding:'0 16px', fontSize:14,
     minHeight:48, outline:'none', fontFamily:'Inter,sans-serif', boxSizing:'border-box'
   }
 
   return (
-    <div style={{minHeight:'100vh', background:'#0A0F1E', display:'flex', flexDirection:'column',
+    <div style={{minHeight:'100vh', background:'#111827', display:'flex', flexDirection:'column',
                  backgroundImage:'radial-gradient(ellipse at 50% 0%, rgba(29,111,232,0.08) 0%, transparent 60%)'}}>
       <div style={{height:2, background:'linear-gradient(90deg,#1D6FE8 0%,#15803D 100%)', opacity:0.7}}/>
 
@@ -37,8 +37,8 @@ export default function Login() {
         {/* Logo */}
         <div style={{textAlign:'center', marginBottom:40}}>
           <div style={{width:72, height:72, borderRadius:18, overflow:'hidden',
-                       border:'1px solid rgba(255,255,255,0.08)', margin:'0 auto 16px',
-                       background:'#111827', display:'flex', alignItems:'center', justifyContent:'center'}}>
+                       border:'1px solid rgba(255,255,255,0.12)', margin:'0 auto 16px',
+                       background:'#1E293B', display:'flex', alignItems:'center', justifyContent:'center'}}>
             <img src="/pwa-192x192.png" alt="REVIX" style={{width:'100%', height:'100%', objectFit:'cover'}}
                  onError={e=>{ e.target.style.display='none' }}/>
           </div>
@@ -54,8 +54,8 @@ export default function Login() {
 
         {/* Form card */}
         <form onSubmit={handleSubmit}
-          style={{width:'100%', maxWidth:360, background:'#111827',
-                  border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:24,
+          style={{width:'100%', maxWidth:360, background:'#1E293B',
+                  border:'1px solid rgba(255,255,255,0.10)', borderRadius:16, padding:24,
                   display:'flex', flexDirection:'column', gap:16}}>
 
           <div>

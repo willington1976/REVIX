@@ -11,7 +11,7 @@ const ROLE_CFG = {
   inspector: {label:'Inspector',color:'#4ADE80',bg:'#052E16'},
 }
 const inp = {
-  width:'100%', background:'#0A0F1E', border:'1px solid rgba(255,255,255,0.08)',
+  width:'100%', background:'#111827', border:'1px solid rgba(255,255,255,0.12)',
   color:'#F1F5F9', borderRadius:10, padding:'0 16px', fontSize:14,
   minHeight:48, outline:'none', fontFamily:'Inter,sans-serif', boxSizing:'border-box'
 }
@@ -60,12 +60,12 @@ export default function MyAccount() {
   }
 
   return (
-    <div style={{minHeight:'100vh', background:'#0A0F1E', paddingBottom:80}}>
+    <div style={{minHeight:'100vh', background:'#111827', paddingBottom:80}}>
       <TopBar title="Mi cuenta" back/>
       <div style={{padding:'20px 16px', display:'flex', flexDirection:'column', gap:12}}>
 
         {/* Profile card */}
-        <div style={{background:'#111827', border:'1px solid rgba(255,255,255,0.06)',
+        <div style={{background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)',
                      borderRadius:16, padding:20, display:'flex', alignItems:'center', gap:16}}>
           <div style={{width:56, height:56, borderRadius:14, display:'flex', alignItems:'center',
                        justifyContent:'center', background:cfg.bg, border:`1px solid ${cfg.color}33`,
@@ -92,7 +92,7 @@ export default function MyAccount() {
         </div>
 
         {/* Change password */}
-        <div style={{background:'#111827', border:'1px solid rgba(255,255,255,0.06)',
+        <div style={{background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)',
                      borderRadius:16, padding:20, display:'flex', flexDirection:'column', gap:14}}>
           <p style={{fontSize:13, fontWeight:600, color:'#94A3B8', margin:0}}>Cambiar contraseña</p>
 
@@ -131,7 +131,7 @@ export default function MyAccount() {
         </div>
 
         {/* App info */}
-        <div style={{background:'#111827', border:'1px solid rgba(255,255,255,0.06)',
+        <div style={{background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)',
                      borderRadius:16, padding:20}}>
           <p style={{fontSize:13, fontWeight:600, color:'#94A3B8', margin:'0 0 14px'}}>Información del sistema</p>
           {[

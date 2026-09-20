@@ -87,7 +87,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{minHeight:'100vh',background:'#0A0F1E',paddingBottom:80}}>
+    <div style={{minHeight:'100vh',background:'#111827',paddingBottom:80}}>
 
       {/* Header */}
       <div style={{padding:'20px 16px 16px',display:'flex',alignItems:'flex-start',justifyContent:'space-between',
@@ -102,7 +102,7 @@ export default function Dashboard() {
           </p>
         </button>
         <button onClick={()=>setShowLogout(true)}
-          style={{padding:'6px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,0.08)',
+          style={{padding:'6px 12px',borderRadius:8,border:'1px solid rgba(255,255,255,0.12)',
                   background:'transparent',color:'#475569',fontSize:12,fontWeight:500,cursor:'pointer'}}>
           Salir
         </button>
@@ -114,7 +114,7 @@ export default function Dashboard() {
       </div>
 
       {/* Hero — Estado del mes */}
-      <div style={{margin:'12px 16px',background:'#111827',border:'1px solid rgba(255,255,255,0.06)',
+      <div style={{margin:'12px 16px',background:'#1E293B',border:'1px solid rgba(255,255,255,0.10)',
                    borderRadius:16,padding:20,overflow:'hidden',position:'relative'}}>
         {/* Subtle accent */}
         <div style={{position:'absolute',top:0,left:0,right:0,height:2,
@@ -152,7 +152,7 @@ export default function Dashboard() {
         ) : (
           <>
             {/* Progress bar */}
-            <div style={{height:4,background:'rgba(255,255,255,0.06)',borderRadius:4,overflow:'hidden',marginBottom:16}}>
+            <div style={{height:4,background:'rgba(255,255,255,0.10)',borderRadius:4,overflow:'hidden',marginBottom:16}}>
               <div style={{height:'100%',borderRadius:4,transition:'width .6s ease',width:`${stats.pct}%`,
                            background:stats.pct===100?'#15803D':'#1D6FE8'}}/>
             </div>
@@ -211,8 +211,8 @@ export default function Dashboard() {
           {actions.filter(a=>!a.primary).map(a=>(
             <button key={a.path} onClick={()=>navigate(a.path)}
               style={{width:'100%',minHeight:52,borderRadius:10,
-                      border:'1px solid rgba(255,255,255,0.06)',
-                      background:'#111827',color:'white',cursor:'pointer',
+                      border:'1px solid rgba(255,255,255,0.10)',
+                      background:'#1E293B',color:'white',cursor:'pointer',
                       display:'flex',alignItems:'center',gap:14,padding:'0 16px',textAlign:'left'}}>
               <span style={{color:'#475569'}}><IconSVG name={a.icon} size={18}/></span>
               <div style={{flex:1}}>
@@ -246,7 +246,7 @@ export default function Dashboard() {
         <div style={{position:'fixed',inset:0,background:'rgba(0,0,0,0.7)',
                      display:'flex',alignItems:'flex-end',justifyContent:'center',
                      padding:'0 0 env(safe-area-inset-bottom,0)',zIndex:50}}>
-          <div style={{background:'#1A2235',border:'1px solid rgba(255,255,255,0.08)',
+          <div style={{background:'#243044',border:'1px solid rgba(255,255,255,0.12)',
                        borderRadius:'20px 20px 0 0',width:'100%',maxWidth:480,
                        padding:'24px 20px 32px'}}>
             <div style={{width:36,height:4,background:'rgba(255,255,255,0.1)',
@@ -259,7 +259,7 @@ export default function Dashboard() {
             </p>
             <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:8}}>
               <button onClick={()=>setShowLogout(false)}
-                style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.08)',
+                style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.12)',
                         background:'transparent',color:'#64748B',fontWeight:500,
                         fontSize:14,cursor:'pointer',fontFamily:'Inter,sans-serif'}}>
                 Cancelar

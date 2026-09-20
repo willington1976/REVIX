@@ -182,7 +182,7 @@ export default function ExtinguisherDetail() {
       {/* Identity strip */}
       <div className="px-4 pt-4 pb-3">
         <div className="card-highlight rounded-2xl border border-white/8 p-4"
-             style={{background:'#111827', borderLeftColor: badge.color, borderLeftWidth: 3}}>
+             style={{background:'#1E293B', borderLeftColor: badge.color, borderLeftWidth: 3}}>
           <div className="flex items-start justify-between">
             <div>
               <p className="font-mono text-3xl font-bold text-white tracking-tight">{ext.serial}</p>
@@ -205,8 +205,8 @@ export default function ExtinguisherDetail() {
             className="flex-1 font-mono text-xs rounded-xl border transition-colors"
             style={{
               minHeight: 40,
-              background: tab===v ? '#1D6FE8' : '#111827',
-              borderColor: tab===v ? '#1D6FE8' : 'rgba(255,255,255,0.06)',
+              background: tab===v ? '#1D6FE8' : '#1E293B',
+              borderColor: tab===v ? '#1D6FE8' : 'rgba(255,255,255,0.10)',
               color: tab===v ? 'white' : '#64748B'
             }}>
             {l}
@@ -340,7 +340,7 @@ export default function ExtinguisherDetail() {
       {/* ── TAB: QR ── */}
       {tab === 'qr' && (
         <div className="px-4 text-center space-y-4">
-          <div className="card-highlight rounded-2xl border border-white/8 p-6" style={{background:'#111827'}}>
+          <div className="card-highlight rounded-2xl border border-white/8 p-6" style={{background:'#1E293B'}}>
             <p className="font-mono text-[10px] text-slate-500 uppercase tracking-widest mb-4">
               QR original · permanente
             </p>
@@ -457,7 +457,7 @@ export default function ExtinguisherDetail() {
               const GREEN = '#16A34A', RED = '#DC2626', AMBER = '#D97706'
               return (
                 <div key={i} className="card-highlight rounded-xl border border-white/8 p-4"
-                     style={{background:'#111827', borderLeftWidth:3, borderLeftColor: h.item.result==='ok' ? GREEN : RED}}>
+                     style={{background:'#1E293B', borderLeftWidth:3, borderLeftColor: h.item.result==='ok' ? GREEN : RED}}>
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <p className="font-mono text-sm font-bold text-white">{h.date}</p>

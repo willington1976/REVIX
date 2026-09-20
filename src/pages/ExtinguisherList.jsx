@@ -68,7 +68,7 @@ export default function ExtinguisherList() {
   const warning = extinguishers.filter(e=>['< 30 DÍAS','< 60 DÍAS'].includes(statusBadge(e).label)).length
 
   return (
-    <div style={{minHeight:'100vh', background:'#0A0F1E', paddingBottom:80}}>
+    <div style={{minHeight:'100vh', background:'#111827', paddingBottom:80}}>
       <TopBar title="Inventario de Extintores" back
         right={!isInspector && (
           <button onClick={()=>navigate('/extinguishers/new')}
@@ -81,7 +81,7 @@ export default function ExtinguisherList() {
 
       {/* Summary strip */}
       <div style={{padding:'12px 16px', display:'flex', gap:8}}>
-        <div style={{flex:1, background:'#111827', border:'1px solid rgba(255,255,255,0.06)',
+        <div style={{flex:1, background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)',
                      borderRadius:10, padding:'10px 14px'}}>
           <p style={{fontFamily:'JetBrains Mono,monospace', fontSize:22, fontWeight:700,
                      color:'#F1F5F9', margin:0}}>{extinguishers.length}</p>
@@ -105,7 +105,7 @@ export default function ExtinguisherList() {
         )}
         {isInspector && (
           <div style={{display:'flex', alignItems:'center', padding:'0 12px',
-                       background:'#0F172A', border:'1px solid rgba(255,255,255,0.06)',
+                       background:'#0F172A', border:'1px solid rgba(255,255,255,0.10)',
                        borderRadius:10}}>
             <span style={{fontSize:11, color:'#334155', fontFamily:'JetBrains Mono,monospace',
                            textTransform:'uppercase', letterSpacing:'0.06em', whiteSpace:'nowrap'}}>
@@ -124,7 +124,7 @@ export default function ExtinguisherList() {
           </svg>
           <input value={search} onChange={e=>setSearch(e.target.value)}
             placeholder="Buscar serial, zona, tipo..."
-            style={{width:'100%', background:'#111827', border:'1px solid rgba(255,255,255,0.06)',
+            style={{width:'100%', background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)',
                     color:'#F1F5F9', borderRadius:10, padding:'0 16px 0 40px', fontSize:14,
                     minHeight:44, outline:'none', fontFamily:'Inter,sans-serif', boxSizing:'border-box'}}/>
         </div>
@@ -137,7 +137,7 @@ export default function ExtinguisherList() {
             style={{flexShrink:0, padding:'6px 14px', borderRadius:20, fontSize:12, fontWeight:500,
                     cursor:'pointer', fontFamily:'Inter,sans-serif', transition:'all .15s',
                     background: filter===t.v?'#1D6FE8':'rgba(255,255,255,0.04)',
-                    border: `1px solid ${filter===t.v?'#1D6FE8':'rgba(255,255,255,0.06)'}`,
+                    border: `1px solid ${filter===t.v?'#1D6FE8':'rgba(255,255,255,0.10)'}`,
                     color: filter===t.v?'white':'#64748B'}}>
             {t.l}
           </button>
@@ -157,7 +157,7 @@ export default function ExtinguisherList() {
             return (
               <div key={ext.id}
                 onClick={()=>!isInspector&&navigate(`/extinguishers/${ext.id}`)}
-                style={{background:'#111827', border:'1px solid rgba(255,255,255,0.06)',
+                style={{background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)',
                         borderRadius:12, borderLeft:`3px solid ${accentColor}`,
                         padding:'14px 16px', cursor:isInspector?'default':'pointer',
                         display:'flex', alignItems:'flex-start', gap:12}}>

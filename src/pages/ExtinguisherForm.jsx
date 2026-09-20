@@ -13,7 +13,7 @@ const ZONES = ['Terminal Nacional','Terminal Internacional','Sala de Pasajeros',
   'Servicios Médicos','Torre de Control','Área de Rampa','Hangares','Bomberos/BAE','Otro']
 
 const inp = {
-  width:'100%', background:'#0A0F1E', border:'1px solid rgba(255,255,255,0.08)',
+  width:'100%', background:'#111827', border:'1px solid rgba(255,255,255,0.12)',
   color:'#F1F5F9', borderRadius:10, padding:'0 16px', fontSize:14,
   minHeight:48, outline:'none', fontFamily:'Inter,sans-serif', boxSizing:'border-box'
 }
@@ -83,10 +83,10 @@ export default function ExtinguisherForm() {
   const qrValue = savedId ? encodeQRPayload(profile.airportCode, savedId) : ''
 
   if (savedId) return (
-    <div style={{minHeight:'100vh', background:'#0A0F1E', paddingBottom:80}}>
+    <div style={{minHeight:'100vh', background:'#111827', paddingBottom:80}}>
       <TopBar title="Extintor registrado" back/>
       <div style={{padding:'20px 16px', display:'flex', flexDirection:'column', gap:16, alignItems:'center'}}>
-        <div style={{background:'#111827', border:'1px solid rgba(21,128,61,0.3)',
+        <div style={{background:'#1E293B', border:'1px solid rgba(21,128,61,0.3)',
                      borderRadius:16, padding:24, width:'100%', textAlign:'center'}}>
           <div style={{display:'inline-flex', alignItems:'center', justifyContent:'center',
                        width:40, height:40, borderRadius:10, background:'rgba(21,128,61,0.15)',
@@ -118,7 +118,7 @@ export default function ExtinguisherForm() {
             Descargar QR (PDF)
           </button>
           <button onClick={()=>{ setSavedId(null); setForm({serial:'',placa:'',zone:'',exactLocation:'',type:'',capacity:'',capacityUnit:'kg',expiryDate:'',lastRecharge:'',lastHydroTest:'',homolograma:''}) }}
-            style={{minHeight:48, borderRadius:10, border:'1px solid rgba(255,255,255,0.08)',
+            style={{minHeight:48, borderRadius:10, border:'1px solid rgba(255,255,255,0.12)',
                     background:'transparent', color:'#94A3B8', fontSize:14, cursor:'pointer', fontFamily:'Inter,sans-serif'}}>
             + Registrar otro extintor
           </button>
@@ -129,12 +129,12 @@ export default function ExtinguisherForm() {
   )
 
   return (
-    <div style={{minHeight:'100vh', background:'#0A0F1E', paddingBottom:80}}>
+    <div style={{minHeight:'100vh', background:'#111827', paddingBottom:80}}>
       <TopBar title="Registrar Extintor" back/>
       <div style={{padding:'20px 16px', display:'flex', flexDirection:'column', gap:16}}>
 
         {/* Section: Identificación */}
-        <div style={{background:'#111827', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:16, display:'flex', flexDirection:'column', gap:14}}>
+        <div style={{background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)', borderRadius:12, padding:16, display:'flex', flexDirection:'column', gap:14}}>
           <p style={{fontSize:11, fontWeight:600, color:'#334155', textTransform:'uppercase',
                      letterSpacing:'0.1em', margin:0}}>Identificación</p>
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>
@@ -175,7 +175,7 @@ export default function ExtinguisherForm() {
         </div>
 
         {/* Section: Ubicación */}
-        <div style={{background:'#111827', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:16, display:'flex', flexDirection:'column', gap:14}}>
+        <div style={{background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)', borderRadius:12, padding:16, display:'flex', flexDirection:'column', gap:14}}>
           <p style={{fontSize:11, fontWeight:600, color:'#334155', textTransform:'uppercase',
                      letterSpacing:'0.1em', margin:0}}>Ubicación</p>
           <Field label="Zona *">
@@ -197,7 +197,7 @@ export default function ExtinguisherForm() {
         </div>
 
         {/* Section: Fechas */}
-        <div style={{background:'#111827', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:16, display:'flex', flexDirection:'column', gap:14}}>
+        <div style={{background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)', borderRadius:12, padding:16, display:'flex', flexDirection:'column', gap:14}}>
           <p style={{fontSize:11, fontWeight:600, color:'#334155', textTransform:'uppercase',
                      letterSpacing:'0.1em', margin:0}}>Fechas y certificaciones</p>
           <div style={{display:'grid', gridTemplateColumns:'1fr 1fr', gap:12}}>

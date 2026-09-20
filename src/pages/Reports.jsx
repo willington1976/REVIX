@@ -76,12 +76,12 @@ export default function Reports() {
   }
 
   const S = { // shared styles
-    card: { background:'#111827', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12 },
+    card: { background:'#1E293B', border:'1px solid rgba(255,255,255,0.10)', borderRadius:12 },
     label: { fontSize:11, fontWeight:500, color:'#475569', textTransform:'uppercase', letterSpacing:'0.08em', fontFamily:'JetBrains Mono,monospace' },
   }
 
   return (
-    <div style={{minHeight:'100vh', background:'#0A0F1E', paddingBottom:80}}>
+    <div style={{minHeight:'100vh', background:'#111827', paddingBottom:80}}>
       <TopBar title="Informes de Inspección" back/>
 
       {loading ? (
@@ -110,8 +110,8 @@ export default function Reports() {
                 <button onClick={()=>toggleYear(year)}
                   style={{...S.card, width:'100%', padding:'14px 16px', cursor:'pointer',
                           display:'flex', alignItems:'center', justifyContent:'space-between',
-                          marginBottom:collapsed?4:0, border:`1px solid ${isCurrent?'rgba(29,111,232,0.2)':'rgba(255,255,255,0.06)'}`,
-                          background:isCurrent?'rgba(29,111,232,0.05)':'#111827'}}>
+                          marginBottom:collapsed?4:0, border:`1px solid ${isCurrent?'rgba(29,111,232,0.2)':'rgba(255,255,255,0.10)'}`,
+                          background:isCurrent?'rgba(29,111,232,0.05)':'#1E293B'}}>
                   <div style={{display:'flex', alignItems:'center', gap:12}}>
                     <div style={{display:'flex', alignItems:'center', gap:8}}>
                       <svg style={{transform:collapsed?'rotate(-90deg)':'rotate(0deg)', transition:'0.2s',
@@ -172,7 +172,7 @@ export default function Reports() {
                                     </p>
                                     {/* Coverage bar */}
                                     <div style={{display:'flex', alignItems:'center', gap:8, marginBottom:8}}>
-                                      <div style={{flex:1, height:3, background:'rgba(255,255,255,0.06)', borderRadius:2, overflow:'hidden'}}>
+                                      <div style={{flex:1, height:3, background:'rgba(255,255,255,0.10)', borderRadius:2, overflow:'hidden'}}>
                                         <div style={{height:'100%', borderRadius:2, transition:'width .4s',
                                                      width:`${cov}%`,
                                                      background:cov===100?'#15803D':cov>=80?'#1D6FE8':'#B45309'}}/>
