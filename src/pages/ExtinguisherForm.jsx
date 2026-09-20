@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'firebase/firestore'
 import { db } from '../firebase'
 import { useAuth } from '../contexts/AuthContext'
 import { useNavigate } from 'react-router-dom'
@@ -8,7 +8,7 @@ import { encodeQRPayload } from '../utils/qrHelpers'
 import { TopBar, AppFooter } from '../components/AppShell'
 import jsPDF from 'jspdf'
 
-const TYPES = ['PQS (Polvo Químico Seco)','CO2','Agua','Espuma AFFF','Halotron','Clase D']
+const TYPES = ['PQS (Polvo Químico Seco)','CO2','Agua','Espuma AFFF','Halotron','Clase D','Otro']
 const ZONES = ['Terminal Nacional','Terminal Internacional','Sala de Pasajeros','Pasillos',
   'Servicios Médicos','Torre de Control','Área de Rampa','Hangares','Bomberos/BAE','Otro']
 
@@ -31,6 +31,8 @@ export default function ExtinguisherForm() {
   const qrRef = useRef()
   const [saving, setSaving] = useState(false)
   const [savedId, setSavedId] = useState(null)
+  const [customType, setCustomType] = useState('')
+  const [customZone, setCustomZone] = useState('')
   const [form, setForm] = useState({
     serial:'', placa:'', zone:'', exactLocation:'', type:'',
     capacity:'', capacityUnit:'kg', expiryDate:'', lastRecharge:'',
@@ -39,11 +41,26 @@ export default function ExtinguisherForm() {
   const set = (k,v) => setForm(p=>({...p,[k]:v}))
 
   const handleSave = async () => {
-    if (!form.serial||!form.zone||!form.type||!form.capacity) { alert('Completa los campos obligatorios'); return }
+    const finalType = form.type==='Otro' ? (customType.trim()||'Otro') : form.type
+    const finalZone = form.zone==='Otro' ? (customZone.trim()||'Otro') : form.zone
+    if (!form.serial||!finalZone||!finalType||!form.capacity) { alert('Completa los campos obligatorios'); return }
     setSaving(true)
     try {
+      // Check for duplicate serial
+      const dupSnap = await getDocs(query(
+        collection(db,'airports',profile.airportCode,'extinguishers'),
+        where('serial','==',form.serial.trim())
+      ))
+      if (!dupSnap.empty) {
+        alert(`Ya existe un extintor con serial "${form.serial}" en el inventario.`)
+        setSaving(false); return
+      }
       const ref = await addDoc(collection(db,'airports',profile.airportCode,'extinguishers'), {
-        ...form, airportCode:profile.airportCode, airportName:profile.airportName||profile.airportCode,
+        ...form,
+        type: finalType,
+        zone: finalZone,
+        serial: form.serial.trim(),
+        airportCode:profile.airportCode, airportName:profile.airportName||profile.airportCode,
         createdAt:serverTimestamp(), createdBy:profile.name||'admin', active:true,
       })
       setSavedId(ref.id)
@@ -136,6 +153,12 @@ export default function ExtinguisherForm() {
               {TYPES.map(t=><option key={t} value={t}>{t}</option>)}
             </select>
           </Field>
+          {form.type==='Otro' && (
+            <Field label="Especifica el tipo">
+              <input value={customType} onChange={e=>setCustomType(e.target.value)}
+                placeholder="Ej: Halón 1301, Agua nebulizada..." style={inp}/>
+            </Field>
+          )}
           <div style={{display:'grid', gridTemplateColumns:'1fr 100px', gap:12}}>
             <Field label="Capacidad *">
               <input type="number" value={form.capacity} onChange={e=>set('capacity',e.target.value)}
@@ -161,6 +184,12 @@ export default function ExtinguisherForm() {
               {ZONES.map(z=><option key={z} value={z}>{z}</option>)}
             </select>
           </Field>
+          {form.zone==='Otro' && (
+            <Field label="Especifica la zona">
+              <input value={customZone} onChange={e=>setCustomZone(e.target.value)}
+                placeholder="Ej: Bodega norte, Sala técnica..." style={inp}/>
+            </Field>
+          )}
           <Field label="Ubicación exacta *">
             <input value={form.exactLocation} onChange={e=>set('exactLocation',e.target.value)}
               placeholder="Frente a puerta 3, columna izquierda" style={inp}/>

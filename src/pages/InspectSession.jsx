@@ -417,16 +417,37 @@ export default function InspectSession() {
       </div>
 
       {showWarning && (
-        <div className="fixed inset-0 flex items-end justify-center z-50 px-4 pb-6" style={{background:'rgba(0,0,0,0.75)'}}>
-          <div className="card-highlight w-full max-w-md rounded-2xl border p-5" style={{background:'#1C1A07',borderColor:AMBER+'44'}}>
+        <div className="fixed inset-0 z-50 flex items-end justify-center px-4 pb-6" style={{background:'rgba(0,0,0,0.85)'}}>
+          <div className="w-full max-w-md rounded-2xl border p-5" style={{background:'#1C1A07',borderColor:AMBER+'44',maxHeight:'80vh',display:'flex',flexDirection:'column'}}>
             <p className="font-bold text-base mb-1" style={{color:AMBER}}>⚠ Extintores sin revisar</p>
-            <p className="text-slate-400 text-sm mb-4"><span className="text-white font-bold">{pending.length}</span> quedarán como omitidos en el informe.</p>
-            <div className="space-y-1.5 mb-4 overflow-y-auto" style={{maxHeight:140}}>
-              {pending.map((e,i)=><div key={i} className="flex items-center gap-2"><div className="w-1 h-1 rounded-full" style={{background:AMBER}}/><span className="font-mono text-xs text-slate-300">{e.serial} · {e.zone}</span></div>)}
+            <p style={{fontSize:13,color:'#94A3B8',marginBottom:12}}>
+              <span style={{color:'white',fontWeight:700}}>{pending.length}</span> quedarán omitidos en el informe.
+            </p>
+            {/* Cards of pending extinguishers */}
+            <div style={{overflowY:'auto',flex:1,display:'flex',flexDirection:'column',gap:8,marginBottom:14}}>
+              {pending.map((e,i)=>(
+                <div key={i} style={{background:'#0A0F1E',borderRadius:10,padding:'10px 14px',
+                                      border:`1px solid ${AMBER}33`,borderLeft:`3px solid ${AMBER}`}}>
+                  <div style={{display:'flex',alignItems:'baseline',gap:8,marginBottom:3}}>
+                    <span style={{fontFamily:'JetBrains Mono,monospace',fontSize:15,fontWeight:700,color:'#F1F5F9'}}>{e.serial}</span>
+                    <span style={{fontSize:11,color:'#64748B',fontFamily:'JetBrains Mono,monospace'}}>{e.type?.split(' ')[0]}</span>
+                  </div>
+                  <p style={{fontSize:11,color:'#64748B',margin:0,textTransform:'uppercase',letterSpacing:'0.05em'}}>{e.zone}</p>
+                  <p style={{fontSize:11,color:'#475569',margin:'2px 0 0'}}>{e.exactLocation}</p>
+                </div>
+              ))}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button onClick={()=>setShowWarning(false)} className="font-semibold rounded-xl text-sm border border-white/10 text-slate-400" style={{minHeight:48}}>Seguir escaneando</button>
-              <button onClick={()=>{setShowWarning(false);setPhase('summary')}} className="font-bold rounded-xl text-sm" style={{minHeight:48,background:AMBER,color:'#1C1A07'}}>Finalizar igual</button>
+            <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+              <button onClick={()=>setShowWarning(false)}
+                style={{minHeight:48,borderRadius:10,border:'1px solid rgba(255,255,255,0.1)',
+                        background:'transparent',color:'#64748B',fontWeight:500,fontSize:14,cursor:'pointer'}}>
+                Seguir escaneando
+              </button>
+              <button onClick={()=>{setShowWarning(false);setPhase('summary')}}
+                style={{minHeight:48,borderRadius:10,border:'none',
+                        background:AMBER,color:'#1C1A07',fontWeight:700,fontSize:14,cursor:'pointer'}}>
+                Finalizar igual
+              </button>
             </div>
           </div>
         </div>
